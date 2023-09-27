@@ -34,13 +34,13 @@ export class MiEmojiRequest {
 	public userId: MiUser['id'] | null;
 
 	@ManyToOne(type => MiUser, {
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 	})
 	@JoinColumn()
 	public user: MiUser | null;
 
 	@ManyToOne(type => MiDriveFile, {
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 	})
 	@JoinColumn()
 	public image: MiDriveFile | null;
