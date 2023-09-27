@@ -20,6 +20,12 @@ export class MiEmojiRequest {
 	public createdAt: Date;
 
 	@Index()
+	@Column('timestamp with time zone', {
+		comment: 'The updated date of the EmojiRequest.',
+	})
+	public updatedAt: Date;
+
+	@Index()
 	@Column({
 		...id(),
 		nullable: true,

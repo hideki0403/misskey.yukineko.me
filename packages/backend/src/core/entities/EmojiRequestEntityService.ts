@@ -37,6 +37,7 @@ export class EmojiRequestEntityService {
 		return {
 			id: emoji.id,
 			createdAt: emoji.createdAt.toISOString(),
+			updatedAt: emoji.updatedAt.toISOString(),
 			user: emoji.user ? await this.userEntityService.pack(emoji.user) : null,
 			image: emoji.image ? await this.driveFileEntityService.pack(emoji.image) : null,
 			name: emoji.name,

@@ -16,6 +16,11 @@ export const packedEmojiRequestSchema = {
 			optional: false, nullable: false,
 			format: 'date-time',
 		},
+		updatedAt: {
+			type: 'string',
+			optional: false, nullable: false,
+			format: 'date-time',
+		},
 		user: {
 			type: 'object',
 			optional: true, nullable: true,
