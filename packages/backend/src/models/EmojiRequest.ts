@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { PrimaryColumn, Entity, Index, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { PrimaryColumn, Entity, Index, Column, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { id } from './util/id.js';
 import { MiDriveFile } from './DriveFile.js';
 import { MiUser } from './User.js';
+import { MiEmoji } from './Emoji.js';
 
 @Entity('emoji_request')
 export class MiEmojiRequest {
@@ -92,8 +93,16 @@ export class MiEmojiRequest {
 	})
 	public commentByAdmin: string | null;
 
-	@Column('boolean', {
-		default: false,
+	@OneToOne(type => MiEmoji, {
+		onDelete: 'CASCADE',
 	})
-	public isImported: boolean;
+	@JoinColumn()
+	public importedEmoji: MiEmoji | null;
+
+	@Index()
+	@Column({
+		...id(),
+		nullable: true,
+	})
+	public importedEmojiId: MiEmoji['id'] | null;
 }
