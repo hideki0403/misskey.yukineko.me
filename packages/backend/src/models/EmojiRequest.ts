@@ -91,4 +91,9 @@ export class MiEmojiRequest {
 		length: 1024, nullable: true,
 	})
 	public commentByAdmin: string | null;
+
+	@Column('boolean', {
+		default: false,
+	})
+	public isImported: boolean;
 }
