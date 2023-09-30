@@ -80,7 +80,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				localOnly: ps.localOnly,
 				status: 'pending',
 				comment: ps.comment,
-			}).then(x => this.emojiRequestsRepository.findOneByOrFail(x.identifiers[0]));
+			}).then(x => this.emojiRequestsRepository.findOneOrFail({
+				where: x.identifiers[0],
+				relations: ['user', 'image'],
+			}));
 
 			return this.emojiRequestEntityService.pack(emoji);
 		});
