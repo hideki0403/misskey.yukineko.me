@@ -1469,6 +1469,7 @@ _role:
     inviteLimitCycle: "招待コードの発行間隔"
     inviteExpirationTime: "招待コードの有効期限"
     canManageCustomEmojis: "カスタム絵文字の管理"
+    canRequestCustomEmojis: "カスタム絵文字のリクエスト"
     driveCapacity: "ドライブ容量"
     alwaysMarkNsfw: "ファイルにNSFWを常に付与"
     pinMax: "ノートのピン留めの最大数"
