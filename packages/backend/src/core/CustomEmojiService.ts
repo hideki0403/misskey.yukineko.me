@@ -19,6 +19,7 @@ import { UtilityService } from '@/core/UtilityService.js';
 import { query } from '@/misc/prelude/url.js';
 import type { Serialized } from '@/server/api/stream/types.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
+import { DriveService } from '@/core/DriveService.js';
 
 const parseEmojiStrRegexp = /^(\w+)(?:@([\w.-]+))?$/;
 
@@ -39,6 +40,7 @@ export class CustomEmojiService implements OnApplicationShutdown {
 		private emojiEntityService: EmojiEntityService,
 		private moderationLogService: ModerationLogService,
 		private globalEventService: GlobalEventService,
+		private driveService: DriveService,
 	) {
 		this.cache = new MemoryKVCache<MiEmoji | null>(1000 * 60 * 60 * 12);
 
@@ -158,6 +160,39 @@ export class CustomEmojiService implements OnApplicationShutdown {
 				after: updated,
 			});
 		}
+	}
+
+	@bindThis
+	public async copy(emoji: {
+		originalUrl: string;
+		name: string;
+		category?: string | null;
+		aliases?: string[];
+		license?: string | null;
+		isSensitive?: boolean;
+		localOnly?: boolean;
+		roleIdsThatCanBeUsedThisEmojiAsReaction?: MiRole['id'][];
+	}) {
+		let driveFile: MiDriveFile;
+
+		try {
+			// Create file
+			driveFile = await this.driveService.uploadFromUrl({ url: emoji.originalUrl, user: null, force: true });
+		} catch (e) {
+			throw new Error('failed to copy file');
+		}
+
+		return await this.add({
+			driveFile,
+			name: emoji.name,
+			category: emoji.category ?? null,
+			aliases: emoji.aliases ?? [],
+			host: null,
+			license: emoji.license ?? null,
+			isSensitive: emoji.isSensitive ?? false,
+			localOnly: emoji.localOnly ?? false,
+			roleIdsThatCanBeUsedThisEmojiAsReaction: emoji.roleIdsThatCanBeUsedThisEmojiAsReaction ?? [],
+		});
 	}
 
 	@bindThis

@@ -5,13 +5,9 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { EmojisRepository } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
+import type { EmojisRepository, MiEmoji } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
-import { DriveService } from '@/core/DriveService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { EmojiEntityService } from '@/core/entities/EmojiEntityService.js';
+import { CustomEmojiService } from '@/core/CustomEmojiService.js';
 import { ApiError } from '../../../error.js';
 
 export const meta = {
@@ -57,10 +53,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		@Inject(DI.emojisRepository)
 		private emojisRepository: EmojisRepository,
 
-		private emojiEntityService: EmojiEntityService,
-		private idService: IdService,
-		private globalEventService: GlobalEventService,
-		private driveService: DriveService,
+		private customEmojiService: CustomEmojiService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const emoji = await this.emojisRepository.findOneBy({ id: ps.emojiId });
@@ -69,30 +62,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.noSuchEmoji);
 			}
 
-			let driveFile: MiDriveFile;
+			let copied: MiEmoji;
 
 			try {
-				// Create file
-				driveFile = await this.driveService.uploadFromUrl({ url: emoji.originalUrl, user: null, force: true });
+				copied = await this.customEmojiService.copy(emoji);
 			} catch (e) {
 				throw new ApiError();
 			}
-
-			const copied = await this.emojisRepository.insert({
-				id: this.idService.genId(),
-				updatedAt: new Date(),
-				name: emoji.name,
-				host: null,
-				aliases: [],
-				originalUrl: driveFile.url,
-				publicUrl: driveFile.webpublicUrl ?? driveFile.url,
-				type: driveFile.webpublicType ?? driveFile.type,
-				license: emoji.license,
-			}).then(x => this.emojisRepository.findOneByOrFail(x.identifiers[0]));
-
-			this.globalEventService.publishBroadcastStream('emojiAdded', {
-				emoji: await this.emojiEntityService.packDetailed(copied.id),
-			});
 
 			return {
 				id: copied.id,
