@@ -285,6 +285,24 @@ type CustomEmoji = {
 };
 
 // @public (undocumented)
+type CustomEmojiRequest = {
+    id: string;
+    name: string;
+    createdAt: DateString;
+    updatedAt: DateString;
+    user: UserLite;
+    image: DriveFile;
+    aliases: string[];
+    category: string;
+    license: string;
+    isSensitive: boolean;
+    localOnly: boolean;
+    status: 'pending' | 'accepted' | 'rejected';
+    comment: string;
+    commentByAdmin: string;
+};
+
+// @public (undocumented)
 type DateString = string;
 
 // @public (undocumented)
@@ -488,6 +506,18 @@ export type Endpoints = {
     'admin/emoji/update': {
         req: TODO;
         res: TODO;
+    };
+    'admin/emoji-request/update': {
+        req: TODO;
+        res: CustomEmojiRequest;
+    };
+    'admin/emoji-request/bulk-update': {
+        req: TODO;
+        res: null;
+    };
+    'admin/emoji-request/list': {
+        req: TODO;
+        res: CustomEmojiRequest[];
     };
     'admin/federation/delete-all-files': {
         req: {
@@ -1114,6 +1144,36 @@ export type Endpoints = {
     'endpoints': {
         req: NoParams;
         res: string[];
+    };
+    'emoji-request/create': {
+        req: {
+            name: string;
+            fileId: DriveFile['id'];
+            category?: string | null;
+            aliases?: string[] | null;
+            license?: string | null;
+            isSensitive?: boolean;
+            localOnly?: boolean;
+            comment?: string | null;
+        };
+        res: CustomEmojiRequest;
+    };
+    'emoji-request/delete': {
+        req: {
+            emojiId: CustomEmojiRequest['id'];
+        };
+        res: null;
+    };
+    'emoji-request/list': {
+        req: {
+            limit?: number;
+            sinceId?: CustomEmojiRequest['id'];
+            untilId?: CustomEmojiRequest['id'];
+            status?: CustomEmojiRequest['status'];
+            sort?: '+createdAt' | '-createdAt' | '+updatedAt' | '-updatedAt';
+            query?: string | null;
+        };
+        res: CustomEmojiRequest[];
     };
     'federation/dns': {
         req: {
@@ -2252,6 +2312,7 @@ declare namespace entities {
         Notification_2 as Notification,
         MessagingMessage,
         CustomEmoji,
+        CustomEmojiRequest,
         LiteInstanceMetadata,
         DetailedInstanceMetadata,
         InstanceMetadata,
@@ -2981,9 +3042,9 @@ type UserSorting = '+follower' | '-follower' | '+createdAt' | '-createdAt' | '+u
 //
 // src/api.types.ts:16:32 - (ae-forgotten-export) The symbol "TODO" needs to be exported by the entry point index.d.ts
 // src/api.types.ts:18:25 - (ae-forgotten-export) The symbol "NoParams" needs to be exported by the entry point index.d.ts
-// src/api.types.ts:631:18 - (ae-forgotten-export) The symbol "ShowUserReq" needs to be exported by the entry point index.d.ts
+// src/api.types.ts:639:18 - (ae-forgotten-export) The symbol "ShowUserReq" needs to be exported by the entry point index.d.ts
 // src/entities.ts:107:2 - (ae-forgotten-export) The symbol "notificationTypes_2" needs to be exported by the entry point index.d.ts
-// src/entities.ts:595:2 - (ae-forgotten-export) The symbol "ModerationLogPayloads" needs to be exported by the entry point index.d.ts
+// src/entities.ts:612:2 - (ae-forgotten-export) The symbol "ModerationLogPayloads" needs to be exported by the entry point index.d.ts
 // src/streaming.types.ts:33:4 - (ae-forgotten-export) The symbol "FIXME" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)

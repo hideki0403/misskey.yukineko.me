@@ -2,7 +2,7 @@ import type {
 	Ad, Announcement, Antenna, App, AuthSession, Blocking, Channel, Clip, DateString, DetailedInstanceMetadata, DriveFile, DriveFolder, Following, FollowingFolloweePopulated, FollowingFollowerPopulated, FollowRequest, GalleryPost, Instance,
 	LiteInstanceMetadata,
 	MeDetailed,
-	Note, NoteFavorite, OriginType, Page, ServerInfo, Stats, User, UserDetailed, MeSignup, UserGroup, UserList, UserSorting, Notification, NoteReaction, Signin, MessagingMessage, Invite, InviteLimit, AdminInstanceMetadata,
+	Note, NoteFavorite, OriginType, Page, ServerInfo, Stats, User, UserDetailed, MeSignup, UserGroup, UserList, UserSorting, Notification, NoteReaction, Signin, MessagingMessage, Invite, InviteLimit, AdminInstanceMetadata, CustomEmojiRequest,
 } from './entities.js';
 
 type TODO = Record<string, any> | null;
@@ -54,6 +54,9 @@ export type Endpoints = {
 	'admin/emoji/list': { req: TODO; res: TODO; };
 	'admin/emoji/remove': { req: TODO; res: TODO; };
 	'admin/emoji/update': { req: TODO; res: TODO; };
+	'admin/emoji-request/update': { req: TODO; res: CustomEmojiRequest; };
+	'admin/emoji-request/bulk-update': { req: TODO; res: null; };
+	'admin/emoji-request/list': { req: TODO; res: CustomEmojiRequest[]; };
 	'admin/federation/delete-all-files': { req: { host: string; }; res: null; };
 	'admin/federation/refresh-remote-instance-metadata': { req: TODO; res: TODO; };
 	'admin/federation/remove-all-following': { req: TODO; res: TODO; };
@@ -294,6 +297,11 @@ export type Endpoints = {
 
 	// endpoints
 	'endpoints': { req: NoParams; res: string[]; };
+
+	// emoji-request
+	'emoji-request/create': { req: { name: string; fileId: DriveFile['id']; category?: string | null; aliases?: string[] | null; license?: string | null; isSensitive?: boolean; localOnly?: boolean; comment?: string | null; }; res: CustomEmojiRequest; };
+	'emoji-request/delete': { req: { emojiId: CustomEmojiRequest['id']; }; res: null; };
+	'emoji-request/list': { req: { limit?: number; sinceId?: CustomEmojiRequest['id']; untilId?: CustomEmojiRequest['id']; status?: CustomEmojiRequest['status']; sort?: '+createdAt' | '-createdAt' | '+updatedAt' | '-updatedAt'; query?: string | null; }; res: CustomEmojiRequest[]; };
 
 	// federation
 	'federation/dns': { req: { host: string; }; res: {

@@ -311,6 +311,23 @@ export type CustomEmoji = {
 	aliases: string[];
 };
 
+export type CustomEmojiRequest = {
+	id: string;
+	name: string;
+	createdAt: DateString;
+	updatedAt: DateString;
+	user: UserLite;
+	image: DriveFile;
+	aliases: string[];
+	category: string;
+	license: string;
+	isSensitive: boolean;
+	localOnly: boolean;
+	status: 'pending' | 'accepted' | 'rejected';
+	comment: string;
+	commentByAdmin: string;
+}
+
 export type LiteInstanceMetadata = {
 	maintainerName: string | null;
 	maintainerEmail: string | null;
