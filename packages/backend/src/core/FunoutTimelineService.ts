@@ -12,12 +12,16 @@ import { MiNote } from '@/models/Note.js';
 import type { Packed } from '@/misc/json-schema.js';
 
 type TimelineFilters = {
-	meId: string;
-	withRenotes: boolean;
+	meId?: string;
+	withRenotes?: boolean;
+	userTimeline?: {
+		isSelf: boolean;
+		isFollowing: boolean;
+	};
 	mutingUserIds?: Set<string>;
 	mutingRenoteUserIds?: Set<string>;
 	blockingMeUserIds?: Set<string>;
-	followers?: Record<string, any>;
+	followings?: Record<string, any>;
 };
 
 @Injectable()
@@ -42,6 +46,9 @@ export class FunoutTimelineService {
 			note.reply?.userId ?? null, // ReplyUserID
 			note.text == null && !!note.fileIds?.length && !hasPoll, // isNotQuote
 			note.reply?.visibility === 'followers', // isReplyToFollowers
+			note.channel?.isSensitive ?? false, // isSensitive
+			note.visibility, // visibility
+			note.visibleUserIds?.join(',') ?? null, // visibleUserIds
 		].join(':');
 
 		// リモートから遅れて届いた(もしくは後から追加された)投稿日時が古い投稿が追加されるとページネーション時に問題を引き起こすため、
@@ -64,13 +71,13 @@ export class FunoutTimelineService {
 	}
 
 	@bindThis
-	public async get(name: string, untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters) {
+	public async get(name: string, untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters | null) {
 		const timeline = await this.redisForTimelines.lrange('list:' + name, 0, -1);
 		return this.filter(timeline, untilId, sinceId, filters);
 	}
 
 	@bindThis
-	public async getMulti(name: string[], untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters): Promise<string[]> {
+	public async getMulti(name: string[], untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters | null): Promise<string[]> {
 		const pipeline = this.redisForTimelines.pipeline();
 		for (const n of name) {
 			pipeline.lrange('list:' + n, 0, -1);
@@ -86,9 +93,9 @@ export class FunoutTimelineService {
 	}
 
 	@bindThis
-	private filter(notes: string[], untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters) {
+	private filter(notes: string[], untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters | null) {
 		let timeline = notes.map(item => {
-			const [id, userId, renoteUserId, replyUserId, isNotQuote, isReplyToFollowers] = item.split(':');
+			const [id, userId, renoteUserId, replyUserId, isNotQuote, isReplyToFollowers, isSensitive, visibility, visibleUserIds] = item.split(':');
 			return {
 				id,
 				userId,
@@ -96,6 +103,9 @@ export class FunoutTimelineService {
 				replyUserId,
 				isNotQuote: isNotQuote === 'true',
 				isReplyToFollowers: isReplyToFollowers === 'true',
+				isSensitive: isSensitive === 'true',
+				visibility,
+				visibleUserIds: visibleUserIds === 'null' ? [] : visibleUserIds.split(','),
 			};
 		});
 
@@ -107,19 +117,30 @@ export class FunoutTimelineService {
 			timeline = timeline.filter(note => note.id > sinceId);
 		}
 
+		const meId = filters?.meId;
+
 		if (filters) {
 			timeline = timeline.filter(note => {
 				if (note.userId == null) return false; // Redisに保持されている以前のバージョンのレコードはuserId等の情報が含まれていないため
-				if (note.userId === filters.meId) return true;
 
-				if (filters.mutingUserIds?.has(note.userId)) return false;
-				if (filters.blockingMeUserIds?.has(note.userId)) return false;
+				if (meId) {
+					if (note.userId === meId) return true;
+					if (filters.mutingUserIds?.has(note.userId)) return false;
+					if (filters.blockingMeUserIds?.has(note.userId)) return false;
+					if (note.isReplyToFollowers && filters.followings) {
+						if (!Object.hasOwn(filters.followings, note.replyUserId)) return false;
+					}
+				}
+
 				if (note.renoteUserId && note.isNotQuote) {
 					if (filters.withRenotes === false) return false;
-					if (filters.mutingRenoteUserIds?.has(note.renoteUserId)) return false;
+					if (meId && filters.mutingRenoteUserIds?.has(note.renoteUserId)) return false;
 				}
-				if (note.isReplyToFollowers && filters.followers) {
-					if (!Object.hasOwn(filters.followers, note.replyUserId)) return false;
+
+				if (filters.userTimeline) {
+					if (note.isSensitive && !filters.userTimeline.isSelf) return false;
+					if (note.visibility === 'specified' && (!meId || (meId !== note.userId && !note.visibleUserIds.some(v => v === meId)))) return false;
+					if (note.visibility === 'followers' && !filters.userTimeline.isFollowing && !filters.userTimeline.isSelf) return false;
 				}
 
 				return true;
