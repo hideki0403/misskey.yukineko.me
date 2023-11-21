@@ -123,7 +123,14 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				this.cacheService.userBlockedCache.fetch(me.id),
 			]);
 
-			let noteIds = await this.funoutTimelineService.get(ps.withFiles ? `userListTimelineWithFiles:${list.id}` : `userListTimeline:${list.id}`, untilId, sinceId);
+			let noteIds = await this.funoutTimelineService.get(ps.withFiles ? `userListTimelineWithFiles:${list.id}` : `userListTimeline:${list.id}`, untilId, sinceId, {
+				meId: me.id,
+				withRenotes: ps.withRenotes,
+				mutingUserIds: userIdsWhoMeMuting,
+				mutingRenoteUserIds: userIdsWhoMeMutingRenotes,
+				blockingMeUserIds: userIdsWhoBlockingMe,
+			});
+
 			noteIds = noteIds.slice(0, ps.limit);
 
 			let redisTimeline: MiNote[] = [];
@@ -139,45 +146,27 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					.leftJoinAndSelect('note.channel', 'channel');
 
 				redisTimeline = await query.getMany();
-
-				redisTimeline = redisTimeline.filter(note => {
-					if (note.userId === me.id) {
-						return true;
-					}
-					if (isUserRelated(note, userIdsWhoBlockingMe)) return false;
-					if (isUserRelated(note, userIdsWhoMeMuting)) return false;
-					if (note.renoteId) {
-						if (note.text == null && note.fileIds.length === 0 && !note.hasPoll) {
-							if (isUserRelated(note, userIdsWhoMeMutingRenotes)) return false;
-							if (ps.withRenotes === false) return false;
-						}
-					}
-
-					return true;
-				});
-
 				redisTimeline.sort((a, b) => a.id > b.id ? -1 : 1);
 			}
 
-			if (redisTimeline.length > 0) {
-				this.activeUsersChart.read(me);
-				return await this.noteEntityService.packMany(redisTimeline, me);
-			} else {
-				if (serverSettings.enableFanoutTimelineDbFallback) { // fallback to db
-					return await this.getFromDb(list, {
-						untilId,
-						sinceId,
-						limit: ps.limit,
-						includeMyRenotes: ps.includeMyRenotes,
-						includeRenotedMyNotes: ps.includeRenotedMyNotes,
-						includeLocalRenotes: ps.includeLocalRenotes,
-						withFiles: ps.withFiles,
-						withRenotes: ps.withRenotes,
-					}, me);
-				} else {
-					return [];
-				}
+			if (redisTimeline.length === 0) {
+				if (!serverSettings.enableFanoutTimelineDbFallback) return [];
+
+				// fallback to db
+				return await this.getFromDb(list, {
+					untilId,
+					sinceId,
+					limit: ps.limit,
+					includeMyRenotes: ps.includeMyRenotes,
+					includeRenotedMyNotes: ps.includeRenotedMyNotes,
+					includeLocalRenotes: ps.includeLocalRenotes,
+					withFiles: ps.withFiles,
+					withRenotes: ps.withRenotes,
+				}, me);
 			}
+
+			this.activeUsersChart.read(me);
+			return await this.noteEntityService.packMany(redisTimeline, me);
 		});
 	}
 

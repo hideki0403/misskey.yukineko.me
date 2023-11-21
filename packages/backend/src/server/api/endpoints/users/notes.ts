@@ -85,23 +85,24 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					this.cacheService.userMutingsCache.fetch(me.id),
 				]) : [new Set<string>()];
 
-				const [noteIdsRes, repliesNoteIdsRes, channelNoteIdsRes] = await Promise.all([
-					this.funoutTimelineService.get(ps.withFiles ? `userTimelineWithFiles:${ps.userId}` : `userTimeline:${ps.userId}`, untilId, sinceId),
-					ps.withReplies ? this.funoutTimelineService.get(`userTimelineWithReplies:${ps.userId}`, untilId, sinceId) : Promise.resolve([]),
-					ps.withChannelNotes ? this.funoutTimelineService.get(`userTimelineWithChannel:${ps.userId}`, untilId, sinceId) : Promise.resolve([]),
-				]);
+				const filters = {
+					meId: me?.id,
+					withRenotes: ps.withRenotes,
+					mutingUserIds: userIdsWhoMeMuting,
+					userTimeline: {
+						isSelf: isSelf ?? false,
+						isFollowing: (me && Object.hasOwn(await this.cacheService.userFollowingsCache.fetch(me.id), ps.userId)) ?? false,
+					},
+				};
 
-				let noteIds = Array.from(new Set([
-					...noteIdsRes,
-					...repliesNoteIdsRes,
-					...channelNoteIdsRes,
-				]));
-				noteIds.sort((a, b) => a > b ? -1 : 1);
+				const timelines = [ps.withFiles ? `userTimelineWithFiles:${ps.userId}` : `userTimeline:${ps.userId}`];
+				if (ps.withReplies) timelines.push(`userTimelineWithReplies:${ps.userId}`);
+				if (ps.withChannelNotes) timelines.push(`userTimelineWithChannel:${ps.userId}`);
+
+				let noteIds = await this.funoutTimelineService.getMulti(timelines, sinceId, untilId, filters);
 				noteIds = noteIds.slice(0, ps.limit);
 
 				if (noteIds.length > 0) {
-					const isFollowing = me && Object.hasOwn(await this.cacheService.userFollowingsCache.fetch(me.id), ps.userId);
-
 					const query = this.notesRepository.createQueryBuilder('note')
 						.where('note.id IN (:...noteIds)', { noteIds: noteIds })
 						.innerJoinAndSelect('note.user', 'user')
@@ -111,26 +112,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 						.leftJoinAndSelect('renote.user', 'renoteUser')
 						.leftJoinAndSelect('note.channel', 'channel');
 
-					let timeline = await query.getMany();
-
-					timeline = timeline.filter(note => {
-						if (me && isUserRelated(note, userIdsWhoMeMuting, true)) return false;
-
-						if (note.renoteId) {
-							if (note.text == null && note.fileIds.length === 0 && !note.hasPoll) {
-								if (ps.withRenotes === false) return false;
-							}
-						}
-
-						if (note.channel?.isSensitive && !isSelf) return false;
-						if (note.visibility === 'specified' && (!me || (me.id !== note.userId && !note.visibleUserIds.some(v => v === me.id)))) return false;
-						if (note.visibility === 'followers' && !isFollowing && !isSelf) return false;
-
-						return true;
-					});
-
-					// TODO: フィルタで件数が減った場合の埋め合わせ処理
-
+					const timeline = await query.getMany();
 					timeline.sort((a, b) => a.id > b.id ? -1 : 1);
 
 					if (timeline.length > 0) {

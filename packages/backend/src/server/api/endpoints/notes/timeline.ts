@@ -101,7 +101,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				this.cacheService.userBlockedCache.fetch(me.id),
 			]);
 
-			let noteIds = await this.funoutTimelineService.get(ps.withFiles ? `homeTimelineWithFiles:${me.id}` : `homeTimeline:${me.id}`, untilId, sinceId);
+			let noteIds = await this.funoutTimelineService.get(ps.withFiles ? `homeTimelineWithFiles:${me.id}` : `homeTimeline:${me.id}`, untilId, sinceId, {
+				meId: me.id,
+				withRenotes: ps.withRenotes,
+				followings,
+				mutingUserIds: userIdsWhoMeMuting,
+				mutingRenoteUserIds: userIdsWhoMeMutingRenotes,
+				blockingMeUserIds: userIdsWhoBlockingMe,
+			});
+
 			noteIds = noteIds.slice(0, ps.limit);
 
 			let redisTimeline: MiNote[] = [];
@@ -117,51 +125,30 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					.leftJoinAndSelect('note.channel', 'channel');
 
 				redisTimeline = await query.getMany();
-
-				redisTimeline = redisTimeline.filter(note => {
-					if (note.userId === me.id) {
-						return true;
-					}
-					if (isUserRelated(note, userIdsWhoBlockingMe)) return false;
-					if (isUserRelated(note, userIdsWhoMeMuting)) return false;
-					if (note.renoteId) {
-						if (note.text == null && note.fileIds.length === 0 && !note.hasPoll) {
-							if (isUserRelated(note, userIdsWhoMeMutingRenotes)) return false;
-							if (ps.withRenotes === false) return false;
-						}
-					}
-					if (note.reply && note.reply.visibility === 'followers') {
-						if (!Object.hasOwn(followings, note.reply.userId)) return false;
-					}
-
-					return true;
-				});
-
 				redisTimeline.sort((a, b) => a.id > b.id ? -1 : 1);
 			}
 
-			if (redisTimeline.length > 0) {
-				process.nextTick(() => {
-					this.activeUsersChart.read(me);
-				});
+			if (redisTimeline.length === 0) {
+				if (!serverSettings.enableFanoutTimelineDbFallback) return [];
 
-				return await this.noteEntityService.packMany(redisTimeline, me);
-			} else {
-				if (serverSettings.enableFanoutTimelineDbFallback) { // fallback to db
-					return await this.getFromDb({
-						untilId,
-						sinceId,
-						limit: ps.limit,
-						includeMyRenotes: ps.includeMyRenotes,
-						includeRenotedMyNotes: ps.includeRenotedMyNotes,
-						includeLocalRenotes: ps.includeLocalRenotes,
-						withFiles: ps.withFiles,
-						withRenotes: ps.withRenotes,
-					}, me);
-				} else {
-					return [];
-				}
+				// fallback to db
+				return await this.getFromDb({
+					untilId,
+					sinceId,
+					limit: ps.limit,
+					includeMyRenotes: ps.includeMyRenotes,
+					includeRenotedMyNotes: ps.includeRenotedMyNotes,
+					includeLocalRenotes: ps.includeLocalRenotes,
+					withFiles: ps.withFiles,
+					withRenotes: ps.withRenotes,
+				}, me);
 			}
+
+			process.nextTick(() => {
+				this.activeUsersChart.read(me);
+			});
+
+			return await this.noteEntityService.packMany(redisTimeline, me);
 		});
 	}
 

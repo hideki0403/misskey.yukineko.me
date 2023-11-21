@@ -116,39 +116,39 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				this.cacheService.userBlockedCache.fetch(me.id),
 			]);
 
+			const filters = {
+				meId: me.id,
+				withRenotes: ps.withRenotes,
+				mutingUserIds: userIdsWhoMeMuting,
+				mutingRenoteUserIds: userIdsWhoMeMutingRenotes,
+				blockingMeUserIds: userIdsWhoBlockingMe,
+			};
+
 			let noteIds: string[];
-			let shouldFallbackToDb = false;
 
 			if (ps.withFiles) {
-				const [htlNoteIds, ltlNoteIds] = await this.funoutTimelineService.getMulti([
+				noteIds = await this.funoutTimelineService.getMulti([
 					`homeTimelineWithFiles:${me.id}`,
 					'localTimelineWithFiles',
-				], untilId, sinceId);
-				noteIds = Array.from(new Set([...htlNoteIds, ...ltlNoteIds]));
+				], untilId, sinceId, filters);
 			} else if (ps.withReplies) {
-				const [htlNoteIds, ltlNoteIds, ltlReplyNoteIds] = await this.funoutTimelineService.getMulti([
+				noteIds = await this.funoutTimelineService.getMulti([
 					`homeTimeline:${me.id}`,
 					'localTimeline',
 					'localTimelineWithReplies',
-				], untilId, sinceId);
-				noteIds = Array.from(new Set([...htlNoteIds, ...ltlNoteIds, ...ltlReplyNoteIds]));
+				], untilId, sinceId, filters);
 			} else {
-				const [htlNoteIds, ltlNoteIds] = await this.funoutTimelineService.getMulti([
+				noteIds = await this.funoutTimelineService.getMulti([
 					`homeTimeline:${me.id}`,
 					'localTimeline',
-				], untilId, sinceId);
-				noteIds = Array.from(new Set([...htlNoteIds, ...ltlNoteIds]));
-				shouldFallbackToDb = htlNoteIds.length === 0;
+				], untilId, sinceId, filters);
 			}
 
-			noteIds.sort((a, b) => a > b ? -1 : 1);
 			noteIds = noteIds.slice(0, ps.limit);
-
-			shouldFallbackToDb = shouldFallbackToDb || (noteIds.length === 0);
 
 			let redisTimeline: MiNote[] = [];
 
-			if (!shouldFallbackToDb) {
+			if (noteIds.length !== 0) {
 				const query = this.notesRepository.createQueryBuilder('note')
 					.where('note.id IN (:...noteIds)', { noteIds: noteIds })
 					.innerJoinAndSelect('note.user', 'user')
@@ -159,48 +159,30 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					.leftJoinAndSelect('note.channel', 'channel');
 
 				redisTimeline = await query.getMany();
-
-				redisTimeline = redisTimeline.filter(note => {
-					if (note.userId === me.id) {
-						return true;
-					}
-					if (isUserRelated(note, userIdsWhoBlockingMe)) return false;
-					if (isUserRelated(note, userIdsWhoMeMuting)) return false;
-					if (note.renoteId) {
-						if (note.text == null && note.fileIds.length === 0 && !note.hasPoll) {
-							if (isUserRelated(note, userIdsWhoMeMutingRenotes)) return false;
-							if (ps.withRenotes === false) return false;
-						}
-					}
-
-					return true;
-				});
-
 				redisTimeline.sort((a, b) => a.id > b.id ? -1 : 1);
 			}
 
-			if (redisTimeline.length > 0) {
-				process.nextTick(() => {
-					this.activeUsersChart.read(me);
-				});
+			if (redisTimeline.length === 0) {
+				if (!serverSettings.enableFanoutTimelineDbFallback) return [];
 
-				return await this.noteEntityService.packMany(redisTimeline, me);
-			} else {
-				if (serverSettings.enableFanoutTimelineDbFallback) { // fallback to db
-					return await this.getFromDb({
-						untilId,
-						sinceId,
-						limit: ps.limit,
-						includeMyRenotes: ps.includeMyRenotes,
-						includeRenotedMyNotes: ps.includeRenotedMyNotes,
-						includeLocalRenotes: ps.includeLocalRenotes,
-						withFiles: ps.withFiles,
-						withReplies: ps.withReplies,
-					}, me);
-				} else {
-					return [];
-				}
+				// fallback to db
+				return await this.getFromDb({
+					untilId,
+					sinceId,
+					limit: ps.limit,
+					includeMyRenotes: ps.includeMyRenotes,
+					includeRenotedMyNotes: ps.includeRenotedMyNotes,
+					includeLocalRenotes: ps.includeLocalRenotes,
+					withFiles: ps.withFiles,
+					withReplies: ps.withReplies,
+				}, me);
 			}
+
+			process.nextTick(() => {
+				this.activeUsersChart.read(me);
+			});
+
+			return await this.noteEntityService.packMany(redisTimeline, me);
 		});
 	}
 

@@ -95,7 +95,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					this.cacheService.userMutingsCache.fetch(me.id),
 				]) : [new Set<string>()];
 
-				let noteIds = await this.funoutTimelineService.get(`channelTimeline:${channel.id}`, untilId, sinceId);
+				let noteIds = await this.funoutTimelineService.get(`channelTimeline:${channel.id}`, untilId, sinceId, me ? {
+					meId: me.id,
+					mutingUserIds: userIdsWhoMeMuting,
+				} : null);
 				noteIds = noteIds.slice(0, ps.limit);
 
 				if (noteIds.length > 0) {
@@ -108,16 +111,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 						.leftJoinAndSelect('renote.user', 'renoteUser')
 						.leftJoinAndSelect('note.channel', 'channel');
 
-					let timeline = await query.getMany();
-
-					timeline = timeline.filter(note => {
-						if (me && isUserRelated(note, userIdsWhoMeMuting)) return false;
-
-						return true;
-					});
-
-					// TODO: フィルタで件数が減った場合の埋め合わせ処理
-
+					const timeline = await query.getMany();
 					timeline.sort((a, b) => a.id > b.id ? -1 : 1);
 
 					if (timeline.length > 0) {
