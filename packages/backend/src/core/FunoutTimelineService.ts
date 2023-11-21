@@ -11,6 +11,15 @@ import { IdService } from '@/core/IdService.js';
 import { MiNote } from '@/models/Note.js';
 import type { Packed } from '@/misc/json-schema.js';
 
+type TimelineFilters = {
+	meId: string;
+	withRenotes: boolean;
+	mutingUserIds?: Set<string>;
+	mutingRenoteUserIds?: Set<string>;
+	blockingMeUserIds?: Set<string>;
+	followers?: Record<string, any>;
+};
+
 @Injectable()
 export class FunoutTimelineService {
 	constructor(
@@ -55,41 +64,69 @@ export class FunoutTimelineService {
 	}
 
 	@bindThis
-	public get(name: string, untilId?: string | null, sinceId?: string | null) {
-		if (untilId && sinceId) {
-			return this.redisForTimelines.lrange('list:' + name, 0, -1)
-				.then(ids => ids.filter(id => id < untilId && id > sinceId).sort((a, b) => a > b ? -1 : 1));
-		} else if (untilId) {
-			return this.redisForTimelines.lrange('list:' + name, 0, -1)
-				.then(ids => ids.filter(id => id < untilId).sort((a, b) => a > b ? -1 : 1));
-		} else if (sinceId) {
-			return this.redisForTimelines.lrange('list:' + name, 0, -1)
-				.then(ids => ids.filter(id => id > sinceId).sort((a, b) => a < b ? -1 : 1));
-		} else {
-			return this.redisForTimelines.lrange('list:' + name, 0, -1)
-				.then(ids => ids.sort((a, b) => a > b ? -1 : 1));
-		}
+	public async get(name: string, untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters) {
+		const timeline = await this.redisForTimelines.lrange('list:' + name, 0, -1);
+		return this.filter(timeline, untilId, sinceId, filters);
 	}
 
 	@bindThis
-	public getMulti(name: string[], untilId?: string | null, sinceId?: string | null): Promise<string[][]> {
+	public async getMulti(name: string[], untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters): Promise<string[]> {
 		const pipeline = this.redisForTimelines.pipeline();
 		for (const n of name) {
 			pipeline.lrange('list:' + n, 0, -1);
 		}
-		return pipeline.exec().then(res => {
-			if (res == null) return [];
-			const tls = res.map(r => r[1] as string[]);
-			return tls.map(ids =>
-				(untilId && sinceId)
-					? ids.filter(id => id < untilId && id > sinceId).sort((a, b) => a > b ? -1 : 1)
-					: untilId
-						? ids.filter(id => id < untilId).sort((a, b) => a > b ? -1 : 1)
-						: sinceId
-							? ids.filter(id => id > sinceId).sort((a, b) => a < b ? -1 : 1)
-							: ids.sort((a, b) => a > b ? -1 : 1),
-			);
+
+		const res = await pipeline.exec();
+		if (res == null) return [];
+
+		const tls = res.map(r => r[1] as string[]).flat();
+		const ids = Array.from(new Set(tls));
+
+		return this.filter(ids, untilId, sinceId, filters);
+	}
+
+	@bindThis
+	private filter(notes: string[], untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters) {
+		let timeline = notes.map(item => {
+			const [id, userId, renoteUserId, replyUserId, isNotQuote, isReplyToFollowers] = item.split(':');
+			return {
+				id,
+				userId,
+				renoteUserId,
+				replyUserId,
+				isNotQuote: isNotQuote === 'true',
+				isReplyToFollowers: isReplyToFollowers === 'true',
+			};
 		});
+
+		if (untilId && sinceId) {
+			timeline = timeline.filter(note => note.id < untilId && note.id > sinceId);
+		} else if (untilId) {
+			timeline = timeline.filter(note => note.id < untilId);
+		} else if (sinceId) {
+			timeline = timeline.filter(note => note.id > sinceId);
+		}
+
+		if (filters) {
+			timeline = timeline.filter(note => {
+				if (note.userId == null) return false; // Redisに保持されている以前のバージョンのレコードはuserId等の情報が含まれていないため
+				if (note.userId === filters.meId) return true;
+
+				if (filters.mutingUserIds?.has(note.userId)) return false;
+				if (filters.blockingMeUserIds?.has(note.userId)) return false;
+				if (note.renoteUserId && note.isNotQuote) {
+					if (filters.withRenotes === false) return false;
+					if (filters.mutingRenoteUserIds?.has(note.renoteUserId)) return false;
+				}
+				if (note.isReplyToFollowers && filters.followers) {
+					if (!Object.hasOwn(filters.followers, note.replyUserId)) return false;
+				}
+
+				return true;
+			});
+		}
+
+		return timeline.map(note => note.id).sort((a, b) => a > b ? -1 : 1);
 	}
 
 	@bindThis
