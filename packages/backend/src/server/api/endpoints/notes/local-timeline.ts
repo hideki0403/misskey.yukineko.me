@@ -109,11 +109,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const filters = me ? {
 				meId: me.id,
 				withRenotes: ps.withRenotes,
+				isPublicTimeline: true,
 				mutingUserIds: userIdsWhoMeMuting,
 				mutingRenoteUserIds: userIdsWhoMeMutingRenotes,
 				blockingMeUserIds: userIdsWhoBlockingMe,
 			} : {
 				withRenotes: ps.withRenotes,
+				isPublicTimeline: true,
 			};
 
 			if (ps.withFiles) {

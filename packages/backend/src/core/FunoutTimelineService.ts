@@ -8,12 +8,12 @@ import * as Redis from 'ioredis';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
 import { IdService } from '@/core/IdService.js';
-import { MiNote } from '@/models/Note.js';
 import type { Packed } from '@/misc/json-schema.js';
 
 type TimelineFilters = {
 	meId?: string;
 	withRenotes?: boolean;
+	isPublicTimeline?: boolean;
 	userTimeline?: {
 		isSelf: boolean;
 		isFollowing: boolean;
@@ -21,7 +21,7 @@ type TimelineFilters = {
 	mutingUserIds?: Set<string>;
 	mutingRenoteUserIds?: Set<string>;
 	blockingMeUserIds?: Set<string>;
-	followings?: Record<string, any>;
+	followingUserIds?: Set<string>;
 };
 
 @Injectable()
@@ -121,22 +121,43 @@ export class FunoutTimelineService {
 			timeline = timeline.filter(note => {
 				if (note.userId == null) return false; // Redisに保持されている以前のバージョンのレコードはuserId等の情報が含まれていないため
 
-				if (meId) {
-					if (note.userId === meId) return true;
-					if (filters.mutingUserIds?.has(note.userId)) return false;
-					if (filters.blockingMeUserIds?.has(note.userId)) return false;
-					if (note.isReplyToFollowers && filters.followings) {
-						if (!Object.hasOwn(filters.followings, note.replyUserId)) return false;
+				if (meId && note.userId === meId) return true;
+
+				// 自分がそのユーザーをミュートしている/ブロックされているか
+				if (filters.mutingUserIds?.has(note.userId)) return false;
+				if (filters.blockingMeUserIds?.has(note.userId)) return false;
+
+				if (note.replyUserId) {
+					// ノートのリプライ先がフォロワーのみで、リプライ先を自分がフォローしているか
+					if (note.isReplyToFollowers && !filters.followingUserIds?.has(note.replyUserId)) return false;
+
+					// 自分がリプライ先のユーザーをミュートしている/ブロックされているか
+					if (filters.mutingUserIds?.has(note.replyUserId)) return false;
+					if (filters.blockingMeUserIds?.has(note.replyUserId)) return false;
+
+					if (filters.isPublicTimeline) {
+						// パブリックなTL (LTL) 上での他人による他人へのリプライかどうか (その人自身への返信は含まない)
+						if (note.userId !== note.replyUserId && !filters.followingUserIds?.has(note.userId) && !filters.followingUserIds?.has(note.replyUserId)) return false;
 					}
 				}
 
-				if (note.renoteUserId && note.isNotQuote) {
-					if (filters.withRenotes === false) return false;
-					if (meId && filters.mutingRenoteUserIds?.has(note.renoteUserId)) return false;
+				if (note.renoteUserId) {
+					// withRenotesが有効で、対象のノートが引用ノートではないか
+					if (note.isNotQuote && filters.withRenotes === false) return false;
+
+					// 自分がリノートしたユーザーのリノートミュートをしているか
+					if (filters.mutingRenoteUserIds?.has(note.userId)) return false;
+
+					// 自分がリノート先のユーザーをミュートしている/ブロックされているか
+					if (filters.mutingUserIds?.has(note.renoteUserId)) return false;
+					if (filters.blockingMeUserIds?.has(note.renoteUserId)) return false;
 				}
 
 				if (filters.userTimeline) {
+					// 他人のユーザータイムラインでセンシティブチャンネルの投稿かどうか
 					if (note.isSensitive && !filters.userTimeline.isSelf) return false;
+
+					// 他人のユーザータイムラインで自分宛てのDM/フォロワー限定投稿かどうか
 					if (note.visibility === 'specified' && (!meId || (meId !== note.userId && !note.visibleUserIds.some(v => v === meId)))) return false;
 					if (note.visibility === 'followers' && !filters.userTimeline.isFollowing && !filters.userTimeline.isSelf) return false;
 				}

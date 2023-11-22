@@ -104,7 +104,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			let noteIds = await this.funoutTimelineService.get(ps.withFiles ? `homeTimelineWithFiles:${me.id}` : `homeTimeline:${me.id}`, untilId, sinceId, {
 				meId: me.id,
 				withRenotes: ps.withRenotes,
-				followings,
+				followingUserIds: new Set(Object.keys(followings)),
 				mutingUserIds: userIdsWhoMeMuting,
 				mutingRenoteUserIds: userIdsWhoMeMutingRenotes,
 				blockingMeUserIds: userIdsWhoBlockingMe,
