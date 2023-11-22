@@ -103,7 +103,7 @@ export class FunoutTimelineService {
 				isReplyToFollowers: isReplyToFollowers === 'true',
 				isSensitive: isSensitive === 'true',
 				visibility,
-				visibleUserIds: visibleUserIds === 'null' ? [] : visibleUserIds.split(','),
+				visibleUserIds: visibleUserIds.split(','),
 			};
 		});
 
