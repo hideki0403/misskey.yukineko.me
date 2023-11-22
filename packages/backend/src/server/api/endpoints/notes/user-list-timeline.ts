@@ -123,21 +123,31 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				this.cacheService.userBlockedCache.fetch(me.id),
 			]);
 
-			let noteIds = await this.funoutTimelineService.get(ps.withFiles ? `userListTimelineWithFiles:${list.id}` : `userListTimeline:${list.id}`, untilId, sinceId, {
-				meId: me.id,
-				withRenotes: ps.withRenotes,
-				mutingUserIds: userIdsWhoMeMuting,
-				mutingRenoteUserIds: userIdsWhoMeMutingRenotes,
-				blockingMeUserIds: userIdsWhoBlockingMe,
+			let redisNotes = await this.funoutTimelineService.get(ps.withFiles ? `userListTimelineWithFiles:${list.id}` : `userListTimeline:${list.id}`, untilId, sinceId);
+
+			redisNotes = redisNotes.filter(note => {
+				if (note.userId === me.id) return true;
+
+				if (isUserRelated(note, userIdsWhoBlockingMe)) return false;
+				if (isUserRelated(note, userIdsWhoMeMuting)) return false;
+				if (note.renoteUserId) {
+					if (note.isNotQuote) {
+						if (isUserRelated(note, userIdsWhoMeMutingRenotes)) return false;
+						if (ps.withRenotes === false) return false;
+					}
+				}
+
+				return true;
 			});
 
-			noteIds = noteIds.slice(0, ps.limit);
+			redisNotes.sort((a, b) => a.id > b.id ? -1 : 1);
+			redisNotes = redisNotes.slice(0, ps.limit);
 
 			let redisTimeline: MiNote[] = [];
 
-			if (noteIds.length > 0) {
+			if (redisNotes.length > 0) {
 				const query = this.notesRepository.createQueryBuilder('note')
-					.where('note.id IN (:...noteIds)', { noteIds: noteIds })
+					.where('note.id IN (:...noteIds)', { noteIds: redisNotes.map(x => x.id) })
 					.innerJoinAndSelect('note.user', 'user')
 					.leftJoinAndSelect('note.reply', 'reply')
 					.leftJoinAndSelect('note.renote', 'renote')

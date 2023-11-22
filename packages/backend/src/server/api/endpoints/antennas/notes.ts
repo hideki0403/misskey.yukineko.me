@@ -98,14 +98,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				this.globalEventService.publishInternalEvent('antennaUpdated', antenna);
 			}
 
-			let noteIds = await this.funoutTimelineService.get(`antennaTimeline:${antenna.id}`, untilId, sinceId);
-			noteIds = noteIds.slice(0, ps.limit);
-			if (noteIds.length === 0) {
+			let redisNotes = await this.funoutTimelineService.get(`antennaTimeline:${antenna.id}`, untilId, sinceId);
+			redisNotes.sort((a, b) => a.id > b.id ? -1 : 1);
+			redisNotes = redisNotes.slice(0, ps.limit);
+			if (redisNotes.length === 0) {
 				return [];
 			}
 
 			const query = this.notesRepository.createQueryBuilder('note')
-				.where('note.id IN (:...noteIds)', { noteIds: noteIds })
+				.where('note.id IN (:...noteIds)', { noteIds: redisNotes.map(x => x.id) })
 				.innerJoinAndSelect('note.user', 'user')
 				.leftJoinAndSelect('note.reply', 'reply')
 				.leftJoinAndSelect('note.renote', 'renote')

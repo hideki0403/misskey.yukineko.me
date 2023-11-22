@@ -84,15 +84,16 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				return [];
 			}
 
-			let noteIds = await this.funoutTimelineService.get(`roleTimeline:${role.id}`, untilId, sinceId);
-			noteIds = noteIds.slice(0, ps.limit);
+			let redisNotes = await this.funoutTimelineService.get(`roleTimeline:${role.id}`, untilId, sinceId);
+			redisNotes.sort((a, b) => a.id > b.id ? -1 : 1);
+			redisNotes = redisNotes.slice(0, ps.limit);
 
-			if (noteIds.length === 0) {
+			if (redisNotes.length === 0) {
 				return [];
 			}
 
 			const query = this.notesRepository.createQueryBuilder('note')
-				.where('note.id IN (:...noteIds)', { noteIds: noteIds })
+				.where('note.id IN (:...noteIds)', { noteIds: redisNotes.map(x => x.id) })
 				.andWhere('(note.visibility = \'public\')')
 				.innerJoinAndSelect('note.user', 'user')
 				.leftJoinAndSelect('note.reply', 'reply')

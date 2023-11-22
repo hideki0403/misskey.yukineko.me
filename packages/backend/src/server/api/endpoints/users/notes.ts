@@ -77,6 +77,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const sinceId = ps.sinceId ?? (ps.sinceDate ? this.idService.gen(ps.sinceDate!) : null);
 			const isRangeSpecified = untilId != null && sinceId != null;
 			const isSelf = me && (me.id === ps.userId);
+			const isFollowing = me && Object.hasOwn(await this.cacheService.userFollowingsCache.fetch(me.id), ps.userId);
 
 			if (isRangeSpecified || sinceId == null) {
 				const [
@@ -85,26 +86,34 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					this.cacheService.userMutingsCache.fetch(me.id),
 				]) : [new Set<string>()];
 
-				const filters = {
-					meId: me?.id,
-					withRenotes: ps.withRenotes,
-					mutingUserIds: userIdsWhoMeMuting,
-					userTimeline: {
-						isSelf: isSelf ?? false,
-						isFollowing: (me && Object.hasOwn(await this.cacheService.userFollowingsCache.fetch(me.id), ps.userId)) ?? false,
-					},
-				};
-
 				const timelines = [ps.withFiles ? `userTimelineWithFiles:${ps.userId}` : `userTimeline:${ps.userId}`];
 				if (ps.withReplies) timelines.push(`userTimelineWithReplies:${ps.userId}`);
 				if (ps.withChannelNotes) timelines.push(`userTimelineWithChannel:${ps.userId}`);
 
-				let noteIds = await this.funoutTimelineService.getMulti(timelines, sinceId, untilId, filters);
-				noteIds = noteIds.slice(0, ps.limit);
+				let redisNotes = await this.funoutTimelineService.getMulti(timelines, sinceId, untilId);
 
-				if (noteIds.length > 0) {
+				redisNotes = redisNotes.filter(note => {
+					if (me && isUserRelated(note, userIdsWhoMeMuting, true)) return false;
+
+					if (note.renoteUserId) {
+						if (note.isNotQuote) {
+							if (ps.withRenotes === false) return false;
+						}
+					}
+
+					if (note.isSensitive && !isSelf) return false;
+					if (note.visibility === 'specified' && (!me || (me.id !== note.userId && !note.visibleUserIds.some(v => v === me.id)))) return false;
+					if (note.visibility === 'followers' && !isFollowing && !isSelf) return false;
+
+					return true;
+				});
+
+				redisNotes.sort((a, b) => a.id > b.id ? -1 : 1);
+				redisNotes = redisNotes.slice(0, ps.limit);
+
+				if (redisNotes.length > 0) {
 					const query = this.notesRepository.createQueryBuilder('note')
-						.where('note.id IN (:...noteIds)', { noteIds: noteIds })
+						.where('note.id IN (:...noteIds)', { noteIds: redisNotes.map(x => x.id) })
 						.innerJoinAndSelect('note.user', 'user')
 						.leftJoinAndSelect('note.reply', 'reply')
 						.leftJoinAndSelect('note.renote', 'renote')

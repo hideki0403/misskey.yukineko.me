@@ -95,15 +95,19 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					this.cacheService.userMutingsCache.fetch(me.id),
 				]) : [new Set<string>()];
 
-				let noteIds = await this.funoutTimelineService.get(`channelTimeline:${channel.id}`, untilId, sinceId, me ? {
-					meId: me.id,
-					mutingUserIds: userIdsWhoMeMuting,
-				} : null);
-				noteIds = noteIds.slice(0, ps.limit);
+				let redisNotes = await this.funoutTimelineService.get(`channelTimeline:${channel.id}`, untilId, sinceId);
 
-				if (noteIds.length > 0) {
+				redisNotes = redisNotes.filter(note => {
+					if (me && isUserRelated(note, userIdsWhoMeMuting)) return false;
+					return true;
+				});
+
+				redisNotes.sort((a, b) => a.id > b.id ? -1 : 1);
+				redisNotes = redisNotes.slice(0, ps.limit);
+
+				if (redisNotes.length > 0) {
 					const query = this.notesRepository.createQueryBuilder('note')
-						.where('note.id IN (:...noteIds)', { noteIds: noteIds })
+						.where('note.id IN (:...noteIds)', { noteIds: redisNotes.map(x => x.id) })
 						.innerJoinAndSelect('note.user', 'user')
 						.leftJoinAndSelect('note.reply', 'reply')
 						.leftJoinAndSelect('note.renote', 'renote')

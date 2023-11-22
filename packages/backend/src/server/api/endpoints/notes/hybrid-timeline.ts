@@ -116,41 +116,49 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				this.cacheService.userBlockedCache.fetch(me.id),
 			]);
 
-			const filters = {
-				meId: me.id,
-				withRenotes: ps.withRenotes,
-				mutingUserIds: userIdsWhoMeMuting,
-				mutingRenoteUserIds: userIdsWhoMeMutingRenotes,
-				blockingMeUserIds: userIdsWhoBlockingMe,
-			};
-
-			let noteIds: string[];
+			let redisNotes: Record<string, any>[];
 
 			if (ps.withFiles) {
-				noteIds = await this.funoutTimelineService.getMulti([
+				redisNotes = await this.funoutTimelineService.getMulti([
 					`homeTimelineWithFiles:${me.id}`,
 					'localTimelineWithFiles',
-				], untilId, sinceId, filters);
+				], untilId, sinceId);
 			} else if (ps.withReplies) {
-				noteIds = await this.funoutTimelineService.getMulti([
+				redisNotes = await this.funoutTimelineService.getMulti([
 					`homeTimeline:${me.id}`,
 					'localTimeline',
 					'localTimelineWithReplies',
-				], untilId, sinceId, filters);
+				], untilId, sinceId);
 			} else {
-				noteIds = await this.funoutTimelineService.getMulti([
+				redisNotes = await this.funoutTimelineService.getMulti([
 					`homeTimeline:${me.id}`,
 					'localTimeline',
-				], untilId, sinceId, filters);
+				], untilId, sinceId);
 			}
 
-			noteIds = noteIds.slice(0, ps.limit);
+			redisNotes = redisNotes.filter(note => {
+				if (note.userId === me.id) return true;
+
+				if (isUserRelated(note, userIdsWhoBlockingMe)) return false;
+				if (isUserRelated(note, userIdsWhoMeMuting)) return false;
+				if (note.renoteUserId) {
+					if (note.isNotQuote) {
+						if (isUserRelated(note, userIdsWhoMeMutingRenotes)) return false;
+						if (ps.withRenotes === false) return false;
+					}
+				}
+
+				return true;
+			});
+
+			redisNotes.sort((a, b) => a.id > b.id ? -1 : 1);
+			redisNotes = redisNotes.slice(0, ps.limit);
 
 			let redisTimeline: MiNote[] = [];
 
-			if (noteIds.length !== 0) {
+			if (redisNotes.length !== 0) {
 				const query = this.notesRepository.createQueryBuilder('note')
-					.where('note.id IN (:...noteIds)', { noteIds: noteIds })
+					.where('note.id IN (:...noteIds)', { noteIds: redisNotes.map(x => x.id) })
 					.innerJoinAndSelect('note.user', 'user')
 					.leftJoinAndSelect('note.reply', 'reply')
 					.leftJoinAndSelect('note.renote', 'renote')

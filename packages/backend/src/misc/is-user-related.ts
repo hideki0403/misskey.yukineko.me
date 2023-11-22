@@ -8,11 +8,11 @@ export function isUserRelated(note: any, userIds: Set<string>, ignoreAuthor = fa
 		return true;
 	}
 
-	if (note.reply != null && note.reply.userId !== note.userId && userIds.has(note.reply.userId)) {
+	if (note.replyUserId != null && note.replyUserId !== note.userId && userIds.has(note.replyUserId)) {
 		return true;
 	}
 
-	if (note.renote != null && note.renote.userId !== note.userId && userIds.has(note.renote.userId)) {
+	if (note.renoteUserId != null && note.renoteUserId !== note.userId && userIds.has(note.renoteUserId)) {
 		return true;
 	}
 

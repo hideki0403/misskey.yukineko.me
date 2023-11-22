@@ -10,20 +10,6 @@ import { bindThis } from '@/decorators.js';
 import { IdService } from '@/core/IdService.js';
 import type { Packed } from '@/misc/json-schema.js';
 
-type TimelineFilters = {
-	meId?: string;
-	withRenotes?: boolean;
-	isPublicTimeline?: boolean;
-	userTimeline?: {
-		isSelf: boolean;
-		isFollowing: boolean;
-	};
-	mutingUserIds?: Set<string>;
-	mutingRenoteUserIds?: Set<string>;
-	blockingMeUserIds?: Set<string>;
-	followingUserIds?: Set<string>;
-};
-
 @Injectable()
 export class FunoutTimelineService {
 	constructor(
@@ -69,13 +55,13 @@ export class FunoutTimelineService {
 	}
 
 	@bindThis
-	public async get(name: string, untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters | null) {
+	public async get(name: string, untilId?: string | null, sinceId?: string | null) {
 		const timeline = await this.redisForTimelines.lrange('list:' + name, 0, -1);
-		return this.filter(timeline, untilId, sinceId, filters);
+		return this.filter(timeline, untilId, sinceId);
 	}
 
 	@bindThis
-	public async getMulti(name: string[], untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters | null): Promise<string[]> {
+	public async getMulti(name: string[], untilId?: string | null, sinceId?: string | null) {
 		const pipeline = this.redisForTimelines.pipeline();
 		for (const n of name) {
 			pipeline.lrange('list:' + n, 0, -1);
@@ -87,11 +73,11 @@ export class FunoutTimelineService {
 		const tls = res.map(r => r[1] as string[]).flat();
 		const ids = Array.from(new Set(tls));
 
-		return this.filter(ids, untilId, sinceId, filters);
+		return this.filter(ids, untilId, sinceId);
 	}
 
 	@bindThis
-	private filter(notes: string[], untilId?: string | null, sinceId?: string | null, filters?: TimelineFilters | null) {
+	private filter(notes: string[], untilId?: string | null, sinceId?: string | null) {
 		let timeline = notes.map(item => {
 			const [id, userId, renoteUserId, replyUserId, isNotQuote, isReplyToFollowers, isSensitive, visibility, visibleUserIds] = item.split(':');
 			return {
@@ -115,58 +101,7 @@ export class FunoutTimelineService {
 			timeline = timeline.filter(note => note.id > sinceId);
 		}
 
-		const meId = filters?.meId;
-
-		if (filters) {
-			timeline = timeline.filter(note => {
-				if (note.userId == null) return false; // Redisに保持されている以前のバージョンのレコードはuserId等の情報が含まれていないため
-
-				if (meId && note.userId === meId) return true;
-
-				// 自分がそのユーザーをミュートしている/ブロックされているか
-				if (filters.mutingUserIds?.has(note.userId)) return false;
-				if (filters.blockingMeUserIds?.has(note.userId)) return false;
-
-				if (note.replyUserId) {
-					// ノートのリプライ先がフォロワーのみで、リプライ先を自分がフォローしているか
-					if (note.isReplyToFollowers && !filters.followingUserIds?.has(note.replyUserId)) return false;
-
-					// 自分がリプライ先のユーザーをミュートしている/ブロックされているか
-					if (filters.mutingUserIds?.has(note.replyUserId)) return false;
-					if (filters.blockingMeUserIds?.has(note.replyUserId)) return false;
-
-					if (filters.isPublicTimeline) {
-						// パブリックなTL (LTL) 上での他人による他人へのリプライかどうか (その人自身への返信は含まない)
-						if (note.userId !== note.replyUserId && !filters.followingUserIds?.has(note.userId) && !filters.followingUserIds?.has(note.replyUserId)) return false;
-					}
-				}
-
-				if (note.renoteUserId) {
-					// withRenotesが有効で、対象のノートが引用ノートではないか
-					if (note.isNotQuote && filters.withRenotes === false) return false;
-
-					// 自分がリノートしたユーザーのリノートミュートをしているか
-					if (filters.mutingRenoteUserIds?.has(note.userId)) return false;
-
-					// 自分がリノート先のユーザーをミュートしている/ブロックされているか
-					if (filters.mutingUserIds?.has(note.renoteUserId)) return false;
-					if (filters.blockingMeUserIds?.has(note.renoteUserId)) return false;
-				}
-
-				if (filters.userTimeline) {
-					// 他人のユーザータイムラインでセンシティブチャンネルの投稿かどうか
-					if (note.isSensitive && !filters.userTimeline.isSelf) return false;
-
-					// 他人のユーザータイムラインで自分宛てのDM/フォロワー限定投稿かどうか
-					if (note.visibility === 'specified' && (!meId || (meId !== note.userId && !note.visibleUserIds.some(v => v === meId)))) return false;
-					if (note.visibility === 'followers' && !filters.userTimeline.isFollowing && !filters.userTimeline.isSelf) return false;
-				}
-
-				return true;
-			});
-		}
-
-		return timeline.map(note => note.id).sort((a, b) => a > b ? -1 : 1);
+		return timeline;
 	}
 
 	@bindThis
