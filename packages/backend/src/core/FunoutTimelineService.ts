@@ -35,16 +35,14 @@ export class FunoutTimelineService {
 	}
 
 	@bindThis
-	public push(tl: string, note: MiNote | Packed<'Note'>, maxlen: number, pipeline: Redis.ChainableCommander) {
+	public push(tl: string, note: Packed<'Note'>, maxlen: number, pipeline: Redis.ChainableCommander) {
 		const id = note.id;
-		const hasPoll = 'hasPoll' in note ? note.hasPoll : note.poll != null;
-
 		const item = [
 			id, // NoteID
 			note.userId, // UserID
 			note.renote?.userId ?? null, // RenoteUserID
 			note.reply?.userId ?? null, // ReplyUserID
-			note.text == null && !!note.fileIds?.length && !hasPoll, // isNotQuote
+			!note.text && !note.fileIds?.length && !note.poll, // isNotQuote
 			note.reply?.visibility === 'followers', // isReplyToFollowers
 			note.channel?.isSensitive ?? false, // isSensitive
 			note.visibility, // visibility

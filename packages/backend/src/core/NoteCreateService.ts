@@ -57,6 +57,7 @@ import { FeaturedService } from '@/core/FeaturedService.js';
 import { FunoutTimelineService } from '@/core/FunoutTimelineService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
+import type { Packed } from '@/misc/json-schema.js';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -507,10 +508,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 		// Increment notes count (user)
 		this.incNotesCountOfUser(user);
 
-		this.pushToTl(note, user);
-
-		this.antennaService.addNoteToAntennas(note, user);
-
 		if (data.reply) {
 			this.saveReply(data.reply, note);
 		}
@@ -577,8 +574,9 @@ export class NoteCreateService implements OnApplicationShutdown {
 			// Pack the note
 			const noteObj = await this.noteEntityService.pack(note, null, { skipHide: true, withReactionAndUserPairCache: true });
 
+			this.pushToTl(noteObj, user);
+			this.antennaService.addNoteToAntennas(noteObj, user);
 			this.globalEventService.publishNotesStream(noteObj);
-
 			this.roleService.addNoteToRoleTimeline(noteObj);
 
 			this.webhookService.getActiveWebhooks().then(webhooks => {
@@ -836,7 +834,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	private async pushToTl(note: MiNote, user: { id: MiUser['id']; host: MiUser['host']; }) {
+	private async pushToTl(note: Packed<'Note'>, user: { id: MiUser['id']; host: MiUser['host']; }) {
 		const meta = await this.metaService.fetch();
 		if (!meta.enableFanoutTimeline) return;
 
@@ -845,7 +843,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (note.channelId) {
 			this.funoutTimelineService.push(`channelTimeline:${note.channelId}`, note, this.config.perChannelMaxNoteCacheCount, r);
 
-			this.funoutTimelineService.push(`userTimelineWithChannel:${user.id}`, note, note.userHost == null ? meta.perLocalUserUserTimelineCacheMax : meta.perRemoteUserUserTimelineCacheMax, r);
+			this.funoutTimelineService.push(`userTimelineWithChannel:${user.id}`, note, note.user.host == null ? meta.perLocalUserUserTimelineCacheMax : meta.perRemoteUserUserTimelineCacheMax, r);
 
 			const channelFollowings = await this.channelFollowingsRepository.find({
 				where: {
@@ -856,7 +854,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 			for (const channelFollowing of channelFollowings) {
 				this.funoutTimelineService.push(`homeTimeline:${channelFollowing.followerId}`, note, meta.perUserHomeTimelineCacheMax, r);
-				if (note.fileIds.length > 0) {
+				if (note.fileIds && note.fileIds.length > 0) {
 					this.funoutTimelineService.push(`homeTimelineWithFiles:${channelFollowing.followerId}`, note, meta.perUserHomeTimelineCacheMax / 2, r);
 				}
 			}
@@ -888,15 +886,15 @@ export class NoteCreateService implements OnApplicationShutdown {
 			// TODO: あまりにも数が多いと redisPipeline.exec に失敗する(理由は不明)ため、3万件程度を目安に分割して実行するようにする
 			for (const following of followings) {
 				// 基本的にvisibleUserIdsには自身のidが含まれている前提であること
-				if (note.visibility === 'specified' && !note.visibleUserIds.some(v => v === following.followerId)) continue;
+				if (note.visibility === 'specified' && note.visibleUserIds && !note.visibleUserIds.some(v => v === following.followerId)) continue;
 
 				// 「自分自身への返信 or そのフォロワーへの返信」のどちらでもない場合
-				if (note.replyId && !(note.replyUserId === note.userId || note.replyUserId === following.followerId)) {
+				if (note.reply && !(note.reply.userId === note.userId || note.reply.userId === following.followerId)) {
 					if (!following.withReplies) continue;
 				}
 
 				this.funoutTimelineService.push(`homeTimeline:${following.followerId}`, note, meta.perUserHomeTimelineCacheMax, r);
-				if (note.fileIds.length > 0) {
+				if (note.fileIds && note.fileIds.length > 0) {
 					this.funoutTimelineService.push(`homeTimelineWithFiles:${following.followerId}`, note, meta.perUserHomeTimelineCacheMax / 2, r);
 				}
 			}
@@ -904,44 +902,44 @@ export class NoteCreateService implements OnApplicationShutdown {
 			for (const userListMembership of userListMemberships) {
 				// ダイレクトのとき、そのリストが対象外のユーザーの場合
 				if (
-					note.visibility === 'specified' &&
+					note.visibility === 'specified' && note.visibleUserIds &&
 					!note.visibleUserIds.some(v => v === userListMembership.userListUserId)
 				) continue;
 
 				// 「自分自身への返信 or そのリストの作成者への返信」のどちらでもない場合
-				if (note.replyId && !(note.replyUserId === note.userId || note.replyUserId === userListMembership.userListUserId)) {
+				if (note.reply && !(note.reply.userId === note.userId || note.reply.userId === userListMembership.userListUserId)) {
 					if (!userListMembership.withReplies) continue;
 				}
 
 				this.funoutTimelineService.push(`userListTimeline:${userListMembership.userListId}`, note, meta.perUserListTimelineCacheMax, r);
-				if (note.fileIds.length > 0) {
+				if (note.fileIds && note.fileIds.length > 0) {
 					this.funoutTimelineService.push(`userListTimelineWithFiles:${userListMembership.userListId}`, note, meta.perUserListTimelineCacheMax / 2, r);
 				}
 			}
 
-			if (note.visibility !== 'specified' || !note.visibleUserIds.some(v => v === user.id)) { // 自分自身のHTL
+			if (note.visibility !== 'specified' || (note.visibleUserIds && !note.visibleUserIds.some(v => v === user.id))) { // 自分自身のHTL
 				this.funoutTimelineService.push(`homeTimeline:${user.id}`, note, meta.perUserHomeTimelineCacheMax, r);
-				if (note.fileIds.length > 0) {
+				if (note.fileIds && note.fileIds.length > 0) {
 					this.funoutTimelineService.push(`homeTimelineWithFiles:${user.id}`, note, meta.perUserHomeTimelineCacheMax / 2, r);
 				}
 			}
 
 			// 自分自身以外への返信
-			if (note.replyId && note.replyUserId !== note.userId) {
-				this.funoutTimelineService.push(`userTimelineWithReplies:${user.id}`, note, note.userHost == null ? meta.perLocalUserUserTimelineCacheMax : meta.perRemoteUserUserTimelineCacheMax, r);
+			if (note.reply && note.reply.userId !== note.userId) {
+				this.funoutTimelineService.push(`userTimelineWithReplies:${user.id}`, note, note.user.host == null ? meta.perLocalUserUserTimelineCacheMax : meta.perRemoteUserUserTimelineCacheMax, r);
 
-				if (note.visibility === 'public' && note.userHost == null) {
+				if (note.visibility === 'public' && note.user.host == null) {
 					this.funoutTimelineService.push('localTimelineWithReplies', note, 300, r);
 				}
 			} else {
-				this.funoutTimelineService.push(`userTimeline:${user.id}`, note, note.userHost == null ? meta.perLocalUserUserTimelineCacheMax : meta.perRemoteUserUserTimelineCacheMax, r);
-				if (note.fileIds.length > 0) {
-					this.funoutTimelineService.push(`userTimelineWithFiles:${user.id}`, note, note.userHost == null ? meta.perLocalUserUserTimelineCacheMax / 2 : meta.perRemoteUserUserTimelineCacheMax / 2, r);
+				this.funoutTimelineService.push(`userTimeline:${user.id}`, note, note.user.host == null ? meta.perLocalUserUserTimelineCacheMax : meta.perRemoteUserUserTimelineCacheMax, r);
+				if (note.fileIds && note.fileIds.length > 0) {
+					this.funoutTimelineService.push(`userTimelineWithFiles:${user.id}`, note, note.user.host == null ? meta.perLocalUserUserTimelineCacheMax / 2 : meta.perRemoteUserUserTimelineCacheMax / 2, r);
 				}
 
-				if (note.visibility === 'public' && note.userHost == null) {
+				if (note.visibility === 'public' && note.user.host == null) {
 					this.funoutTimelineService.push('localTimeline', note, 1000, r);
-					if (note.fileIds.length > 0) {
+					if (note.fileIds && note.fileIds.length > 0) {
 						this.funoutTimelineService.push('localTimelineWithFiles', note, 500, r);
 					}
 				}

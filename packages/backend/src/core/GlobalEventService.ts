@@ -144,7 +144,7 @@ export interface UserListEventTypes {
 }
 
 export interface AntennaEventTypes {
-	note: MiNote;
+	note: Packed<'Note'>;
 }
 
 export interface RoleTimelineEventTypes {
