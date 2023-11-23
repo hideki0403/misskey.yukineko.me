@@ -139,7 +139,7 @@ export class CacheService implements OnApplicationShutdown {
 		this.userChannelFollowingsCache = new RedisKVCache<Set<string>>(this.redisClient, 'userChannelFollowings', {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m
-			fetcher: (key) => this.channelFollowingsRepository.find({ where: { followeeId: key }, select: ['followerId'] }).then(xs => new Set(xs.map(x => x.followerId))),
+			fetcher: (key) => this.channelFollowingsRepository.find({ where: { followerId: key }, select: ['followeeId'] }).then(xs => new Set(xs.map(x => x.followeeId))),
 			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
 			fromRedisConverter: (value) => new Set(JSON.parse(value)),
 		});
