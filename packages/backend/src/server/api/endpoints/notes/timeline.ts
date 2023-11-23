@@ -127,7 +127,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			});
 
 			redisNotes.sort((a, b) => a.id > b.id ? -1 : 1);
-			redisNotes = redisNotes.slice(0, ps.limit);
+			redisNotes = redisNotes.slice(0, ps.limit * 2);
 
 			let redisTimeline: MiNote[] = [];
 
@@ -141,7 +141,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					.leftJoinAndSelect('renote.user', 'renoteUser')
 					.leftJoinAndSelect('note.channel', 'channel');
 
-				redisTimeline = await query.getMany();
+				redisTimeline = await query.limit(ps.limit).getMany();
 				redisTimeline.sort((a, b) => a.id > b.id ? -1 : 1);
 			}
 

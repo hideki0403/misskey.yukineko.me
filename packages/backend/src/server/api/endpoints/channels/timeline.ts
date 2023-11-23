@@ -103,7 +103,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				});
 
 				redisNotes.sort((a, b) => a.id > b.id ? -1 : 1);
-				redisNotes = redisNotes.slice(0, ps.limit);
+				redisNotes = redisNotes.slice(0, ps.limit * 2);
 
 				if (redisNotes.length > 0) {
 					const query = this.notesRepository.createQueryBuilder('note')
@@ -115,7 +115,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 						.leftJoinAndSelect('renote.user', 'renoteUser')
 						.leftJoinAndSelect('note.channel', 'channel');
 
-					const timeline = await query.getMany();
+					const timeline = await query.limit(ps.limit).getMany();
 					timeline.sort((a, b) => a.id > b.id ? -1 : 1);
 
 					if (timeline.length > 0) {

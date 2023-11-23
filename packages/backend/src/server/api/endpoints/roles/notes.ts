@@ -86,7 +86,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			let redisNotes = await this.funoutTimelineService.get(`roleTimeline:${role.id}`, untilId, sinceId);
 			redisNotes.sort((a, b) => a.id > b.id ? -1 : 1);
-			redisNotes = redisNotes.slice(0, ps.limit);
+			redisNotes = redisNotes.slice(0, ps.limit * 2);
 
 			if (redisNotes.length === 0) {
 				return [];
@@ -105,7 +105,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			this.queryService.generateMutedUserQuery(query, me);
 			this.queryService.generateBlockedUserQuery(query, me);
 
-			const notes = await query.getMany();
+			const notes = await query.limit(ps.limit).getMany();
 			notes.sort((a, b) => a.id > b.id ? -1 : 1);
 
 			return await this.noteEntityService.packMany(notes, me);
