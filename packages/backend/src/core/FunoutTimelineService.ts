@@ -70,16 +70,38 @@ export class FunoutTimelineService {
 		const res = await pipeline.exec();
 		if (res == null) return [];
 
-		const tls = res.map(r => r[1] as string[]).flat();
-		const ids = Array.from(new Set(tls));
+		const tls = res.map(r => r[1] as string[]);
 
-		return this.filter(ids, untilId, sinceId);
+		// 取得した各タイムラインの中で最も古いIDを取得し、古いIDの中で最も新しいIDを取得する
+		const noteLimitId = tls.map(tl => tl[tl.length - 1].split(':')[0]).sort((a, b) => a > b ? -1 : 1)[0];
+		const limitId = sinceId ? sinceId > noteLimitId ? sinceId : noteLimitId : noteLimitId;
+
+		let notes: Record<string, any>[] = [];
+
+		tls.forEach(tl => {
+			notes.push(...this.filter(tl, untilId, limitId));
+		});
+
+		notes = Array.from(new Map(notes.map(note => [note.id, note])).values());
+		notes.sort((a, b) => a.id > b.id ? -1 : 1);
+
+		return notes;
 	}
 
 	@bindThis
 	private filter(notes: string[], untilId?: string | null, sinceId?: string | null) {
-		let timeline = notes.map(item => {
-			const [id, userId, renoteUserId, replyUserId, isNotQuote, isReplyToFollowers, isSensitive, visibility, visibleUserIds] = item.split(':');
+		let parsedItems = notes.map(item => item.split(':'));
+
+		if (untilId && sinceId) {
+			parsedItems = parsedItems.filter(note => note[0] < untilId && note[0] > sinceId);
+		} else if (untilId) {
+			parsedItems = parsedItems.filter(note => note[0] < untilId);
+		} else if (sinceId) {
+			parsedItems = parsedItems.filter(note => note[0] > sinceId);
+		}
+
+		return parsedItems.map(item => {
+			const [id, userId, renoteUserId, replyUserId, isNotQuote, isReplyToFollowers, isSensitive, visibility, visibleUserIds] = item;
 			return {
 				id,
 				userId,
@@ -92,16 +114,6 @@ export class FunoutTimelineService {
 				visibleUserIds: visibleUserIds.split(','),
 			};
 		});
-
-		if (untilId && sinceId) {
-			timeline = timeline.filter(note => note.id < untilId && note.id > sinceId);
-		} else if (untilId) {
-			timeline = timeline.filter(note => note.id < untilId);
-		} else if (sinceId) {
-			timeline = timeline.filter(note => note.id > sinceId);
-		}
-
-		return timeline;
 	}
 
 	@bindThis
