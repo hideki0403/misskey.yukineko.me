@@ -91,22 +91,17 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			const [
 				followings,
-				channelFollowings,
 				userIdsWhoMeMuting,
 				userIdsWhoMeMutingRenotes,
 				userIdsWhoBlockingMe,
 			] = await Promise.all([
 				this.cacheService.userFollowingsCache.fetch(me.id),
-				this.cacheService.userChannelFollowingsCache.fetch(me.id),
 				this.cacheService.userMutingsCache.fetch(me.id),
 				this.cacheService.renoteMutingsCache.fetch(me.id),
 				this.cacheService.userBlockedCache.fetch(me.id),
 			]);
 
-			const timelines = ps.withFiles ? [`homeTimelineWithFiles:${me.id}`] : [`homeTimeline:${me.id}`];
-			channelFollowings.forEach(x => timelines.push(ps.withFiles ? `channelTimelineWithFiles:${x}` : `channelTimeline:${x}`));
-
-			let redisNotes = await this.funoutTimelineService.getMulti(timelines, untilId, sinceId);
+			let redisNotes = await this.funoutTimelineService.get(ps.withFiles ? `homeTimelineWithFiles:${me.id}` : `homeTimeline:${me.id}`, untilId, sinceId);
 
 			redisNotes = redisNotes.filter(note => {
 				if (note.userId === me.id) return true;
