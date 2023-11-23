@@ -14,7 +14,7 @@ import { extractCustomEmojisFromMfm } from '@/misc/extract-custom-emojis-from-mf
 import { extractHashtags } from '@/misc/extract-hashtags.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
-import type { ChannelFollowingsRepository, ChannelsRepository, FollowingsRepository, InstancesRepository, MiFollowing, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
+import type { ChannelsRepository, FollowingsRepository, InstancesRepository, MiFollowing, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiApp } from '@/models/App.js';
 import { concat } from '@/misc/prelude/array.js';
@@ -186,9 +186,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		@Inject(DI.followingsRepository)
 		private followingsRepository: FollowingsRepository,
-
-		@Inject(DI.channelFollowingsRepository)
-		private channelFollowingsRepository: ChannelFollowingsRepository,
 
 		private userEntityService: UserEntityService,
 		private noteEntityService: NoteEntityService,
@@ -842,22 +839,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		if (note.channelId) {
 			this.funoutTimelineService.push(`channelTimeline:${note.channelId}`, note, this.config.perChannelMaxNoteCacheCount, r);
+			if (note.fileIds && note.fileIds.length > 0) {
+				this.funoutTimelineService.push(`channelTimelineWithFiles:${note.channelId}`, note, this.config.perChannelMaxNoteCacheCount / 2, r);
+			}
 
 			this.funoutTimelineService.push(`userTimelineWithChannel:${user.id}`, note, note.user.host == null ? meta.perLocalUserUserTimelineCacheMax : meta.perRemoteUserUserTimelineCacheMax, r);
-
-			const channelFollowings = await this.channelFollowingsRepository.find({
-				where: {
-					followeeId: note.channelId,
-				},
-				select: ['followerId'],
-			});
-
-			for (const channelFollowing of channelFollowings) {
-				this.funoutTimelineService.push(`homeTimeline:${channelFollowing.followerId}`, note, meta.perUserHomeTimelineCacheMax, r);
-				if (note.fileIds && note.fileIds.length > 0) {
-					this.funoutTimelineService.push(`homeTimelineWithFiles:${channelFollowing.followerId}`, note, meta.perUserHomeTimelineCacheMax / 2, r);
-				}
-			}
 		} else {
 			// TODO: キャッシュ？
 			// eslint-disable-next-line prefer-const
