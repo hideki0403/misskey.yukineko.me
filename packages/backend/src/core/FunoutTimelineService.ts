@@ -10,6 +10,18 @@ import { bindThis } from '@/decorators.js';
 import { IdService } from '@/core/IdService.js';
 import type { Packed } from '@/misc/json-schema.js';
 
+type RedisNote = {
+	id: string;
+	userId: string;
+	renoteUserId: string;
+	replyUserId: string;
+	isNotQuote: boolean;
+	isReplyToFollowers: boolean;
+	isSensitive: boolean;
+	visibility: string;
+	visibleUserIds: string[];
+};
+
 @Injectable()
 export class FunoutTimelineService {
 	constructor(
@@ -71,15 +83,10 @@ export class FunoutTimelineService {
 		if (res == null) return [];
 
 		const tls = res.map(r => r[1] as string[]);
-
-		// 取得した各タイムラインの中で最も古いIDを取得し、古いIDの中で最も新しいIDを取得する
-		const noteLimitId = tls.map(tl => tl[tl.length - 1].split(':')[0]).sort((a, b) => a > b ? -1 : 1)[0];
-		const limitId = sinceId ? sinceId > noteLimitId ? sinceId : noteLimitId : noteLimitId;
-
-		let notes: Record<string, any>[] = [];
+		let notes: RedisNote[] = [];
 
 		tls.forEach(tl => {
-			notes.push(...this.filter(tl, untilId, limitId));
+			notes.push(...this.filter(tl, untilId, sinceId));
 		});
 
 		notes = Array.from(new Map(notes.map(note => [note.id, note])).values());
@@ -89,7 +96,7 @@ export class FunoutTimelineService {
 	}
 
 	@bindThis
-	private filter(notes: string[], untilId?: string | null, sinceId?: string | null) {
+	private filter(notes: string[], untilId?: string | null, sinceId?: string | null): RedisNote[] {
 		let parsedItems = notes.map(item => item.split(':'));
 
 		if (untilId && sinceId) {
