@@ -5,6 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <div class="zmdxowus">
+	<span>{{ i18n.ts.scheduledNoteDelete }}</span>
 	<section>
 		<div>
 			<MkSelect v-model="expiration" small>
@@ -106,6 +107,10 @@ watch([expiration, atDate, atTime, after, unit], () => emit('update:modelValue',
 <style lang="scss" scoped>
 .zmdxowus {
 	padding: 8px 16px;
+
+	>span {
+		opacity: 0.7;
+	}
 
 	>ul {
 		display: block;
