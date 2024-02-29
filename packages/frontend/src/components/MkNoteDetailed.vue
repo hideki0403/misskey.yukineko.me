@@ -105,6 +105,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<MkA :to="notePage(appearNote)">
 					<MkTime :time="appearNote.createdAt" mode="detail" colored/>
 				</MkA>
+				<span v-if="appearNote.deleteAt"><i class="ti ti-bomb"></i>{{ i18n.ts.scheduledNoteDelete }}: <MkTime :time="appearNote.deleteAt" mode="detail" colored/></span>
 			</div>
 			<MkReactionsViewer ref="reactionsViewer" :note="appearNote"/>
 			<button class="_button" :class="$style.noteFooterButton" @click="reply()">
@@ -664,6 +665,9 @@ function loadConversation() {
 	margin: 16px 0;
 	opacity: 0.7;
 	font-size: 0.9em;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 }
 
 .noteFooterButton {

@@ -5244,6 +5244,10 @@ export interface Locale extends ILocale {
      * ノートの自己消滅
      */
     "scheduledNoteDelete": string;
+    /**
+     * このノートは{time}に消滅します
+     */
+    "noteDeletationAt": ParameterizedString<"time">;
     "_bubbleGame": {
         /**
          * 遊び方
