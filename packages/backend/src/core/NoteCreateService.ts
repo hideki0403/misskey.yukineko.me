@@ -149,6 +149,7 @@ type Option = {
 	uri?: string | null;
 	url?: string | null;
 	app?: MiApp | null;
+	deleteAt?: Date | null;
 };
 
 @Injectable()
@@ -371,7 +372,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		const willCauseNotification = mentionedUsers.some(u => u.host === null)
 			|| (data.visibility === 'specified' && data.visibleUsers?.some(u => u.host === null))
-			|| data.reply?.userHost === null || (this.isQuote(data) && data.renote?.userHost === null) || false;
+			|| data.reply?.userHost === null || (this.isQuote(data) && data.renote.userHost === null) || false;
 
 		if (meta.blockMentionsFromUnfamiliarRemoteUsers && user.host !== null && willCauseNotification) {
 			const userEntity = await this.usersRepository.findOneBy({ id: user.id });
@@ -573,6 +574,16 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (data.poll && data.poll.expiresAt) {
 			const delay = data.poll.expiresAt.getTime() - Date.now();
 			this.queueService.endedPollNotificationQueue.add(note.id, {
+				noteId: note.id,
+			}, {
+				delay,
+				removeOnComplete: true,
+			});
+		}
+
+		if (data.deleteAt) {
+			const delay = data.deleteAt.getTime() - Date.now();
+			this.queueService.scheduledNoteDeleteQueue.add(note.id, {
 				noteId: note.id,
 			}, {
 				delay,
