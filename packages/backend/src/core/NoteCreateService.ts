@@ -428,6 +428,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			name: data.name,
 			text: data.text,
 			hasPoll: data.poll != null,
+			deleteAt: data.deleteAt,
 			cw: data.cw ?? null,
 			tags: tags.map(tag => normalizeForSearch(tag)),
 			emojis,
