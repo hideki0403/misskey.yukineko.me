@@ -1306,6 +1306,7 @@ userSaysSomethingSensitive: "{name}のセンシティブなファイルを含む
 enableHorizontalSwipe: "スワイプしてタブを切り替える"
 blockMentionsFromUnfamiliarRemoteUsers: "荒らしの可能性があるユーザーからのメンションをブロックする"
 blockMentionsFromUnfamiliarRemoteUsersDescription: "このサーバーからのフォロワーがいないリモートユーザーの、メンションを含むノートをブロックするようにします。"
+scheduledNoteDelete: "ノートの自己消滅"
 
 _bubbleGame:
   howToPlay: "遊び方"
