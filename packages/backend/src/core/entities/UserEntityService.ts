@@ -421,7 +421,7 @@ export class UserEntityService implements OnModuleInit {
 				pinnedPageId: profile!.pinnedPageId,
 				pinnedPage: profile!.pinnedPageId ? this.pageEntityService.pack(profile!.pinnedPageId, me) : null,
 				publicReactions: this.isLocalUser(user) ? profile!.publicReactions : false, // https://github.com/misskey-dev/misskey/issues/12964
-				enableGTL: profile!.enableGTL,
+				hideActivity: this.isLocalUser(user) ? profile!.hideActivity : false, //
 				followersVisibility: profile!.followersVisibility,
 				followingVisibility: profile!.followingVisibility,
 				twoFactorEnabled: profile!.twoFactorEnabled,
@@ -468,6 +468,7 @@ export class UserEntityService implements OnModuleInit {
 				hideOnlineStatus: user.hideOnlineStatus,
 				hideSearchResult: user.hideSearchResult,
 				hideFromSupporterPage: profile!.hideFromSupporterPage,
+				enableGTL: profile!.enableGTL,
 				hasUnreadSpecifiedNotes: this.noteUnreadsRepository.count({
 					where: { userId: user.id, isSpecified: true },
 					take: 1,
