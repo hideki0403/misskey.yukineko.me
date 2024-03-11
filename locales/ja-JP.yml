@@ -1315,7 +1315,7 @@ gameRetry: "リトライ"
 scheduledNoteDelete: "ノートの自己消滅"
 noteDeletationAt: "このノートは{time}に消滅します"
 hideActivity: "アクティビティを非公開にする"
-hideActivityDescription: "プロフィールに表示される自分のアクティビティを非公開にし、他人から見えないようにします。このオプションを有効にしても、引き続き自分のアクティビティは閲覧できます。"
+hideActivityDescription: "プロフィールに表示される自分のアクティビティを非公開にし、他人から見えないようにします。このオプションを有効にしても、自分であればアクティビティタブから引き続き閲覧できます。(他人からは見れません)"
 
 _bubbleGame:
   howToPlay: "遊び方"
