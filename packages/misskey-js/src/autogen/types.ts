@@ -3746,6 +3746,7 @@ export type components = {
       pinnedPageId: string | null;
       pinnedPage: components['schemas']['Page'] | null;
       publicReactions: boolean;
+      hideActivity: boolean;
       /** @enum {string} */
       followingVisibility: 'public' | 'followers' | 'private';
       /** @enum {string} */
@@ -19009,6 +19010,7 @@ export type operations = {
           hideOnlineStatus?: boolean;
           hideSearchResult?: boolean;
           publicReactions?: boolean;
+          hideActivity?: boolean;
           carefulBot?: boolean;
           autoAcceptFollowed?: boolean;
           autoRejectFollowRequest?: boolean;
