@@ -5272,6 +5272,14 @@ export interface Locale extends ILocale {
      * このノートは{time}に消滅します
      */
     "noteDeletationAt": ParameterizedString<"time">;
+    /**
+     * アクティビティを非公開にする
+     */
+    "hideActivity": string;
+    /**
+     * プロフィールに表示される自分のアクティビティを非公開にし、他人から見えないようにします。このオプションを有効にしても、引き続き自分のアクティビティは閲覧できます。
+     */
+    "hideActivityDescription": string;
     "_bubbleGame": {
         /**
          * 遊び方
