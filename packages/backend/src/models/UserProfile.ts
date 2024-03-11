@@ -116,6 +116,11 @@ export class MiUserProfile {
 	})
 	public hideFromSupporterPage: boolean;
 
+	@Column('boolean', {
+		default: false,
+	})
+	public hideActivity: boolean;
+
 	@Column('varchar', {
 		length: 128, nullable: true,
 	})
