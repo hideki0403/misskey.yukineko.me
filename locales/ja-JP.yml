@@ -1317,6 +1317,8 @@ noteDeletationAt: "このノートは{time}に消滅します"
 hideActivity: "アクティビティを非公開にする"
 hideActivityDescription: "自分のプロフィールのアクティビティ (概要/アクティビティタブ) を他人が見れないようにします。このオプションを有効にしても、自分であればプロフィールのアクティビティタブから引き続き閲覧できます。"
 channelAnnouncementDescription: "このお知らせはチャンネルのタイムライン上部に表示されます。最初の1行がタイトルとして表示され、2行目以降はお知らせをタップすることで表示されるようになります。"
+postForm: "投稿フォーム"
+postFormBottomSettingsDescription: "投稿フォームの下部に表示される項目の並び替えが出来ます。項目をクリックすると削除できます。"
 
 _bubbleGame:
   howToPlay: "遊び方"
