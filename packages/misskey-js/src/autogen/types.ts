@@ -4520,7 +4520,7 @@ export type components = {
       isFollowing?: boolean;
       isFavorited?: boolean;
       pinnedNotes?: components['schemas']['Note'][];
-      annoucement?: string | null;
+      annoucement: string | null;
     };
     QueueCount: {
       waiting: number;

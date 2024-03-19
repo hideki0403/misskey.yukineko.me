@@ -91,7 +91,7 @@ export const packedChannelSchema = {
 		},
 		annoucement: {
 			type: 'string',
-			optional: true, nullable: true,
+			optional: false, nullable: true,
 		},
 	},
 } as const;
