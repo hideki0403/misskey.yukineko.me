@@ -169,6 +169,20 @@ export const defaultStore = markRaw(new Storage('base', {
 			'ui',
 		],
 	},
+	postFormActions: {
+		where: 'deviceAccount',
+		default: [
+			'attachFile',
+			'poll',
+			'scheduledNoteDelete',
+			'useCw',
+			'mention',
+			'hashtags',
+			'plugins',
+			'emoji',
+			'addMfmFunction',
+		],
+	},
 	visibility: {
 		where: 'deviceAccount',
 		default: 'public' as 'public' | 'home' | 'followers' | 'specified',
