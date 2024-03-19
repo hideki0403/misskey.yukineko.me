@@ -300,8 +300,6 @@ const bottomItemActionDef: Record<keyof typeof bottomItemDef, {
 	},
 });
 
-console.log(defaultStore.state.postFormActions);
-
 watch(text, () => {
 	checkMissingMention();
 }, { immediate: true });
