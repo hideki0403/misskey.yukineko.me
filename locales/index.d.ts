@@ -1485,7 +1485,7 @@ export interface Locale extends ILocale {
      */
     "requestedRefresh": string;
     /**
-     * 最新の情報が反映されるまで最大5分ほどかかります。
+     * 最新の情報が反映されるまで最大1時間程度かかる場合があります。反映されない場合は5~10分ほどお待ちいただいた上で、再度リクエストをお試しください。
      */
     "requestedRefreshDetails": string;
     /**
