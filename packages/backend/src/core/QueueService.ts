@@ -69,6 +69,19 @@ export class QueueService {
 			repeat: { pattern: '*/5 * * * *' },
 			removeOnComplete: true,
 		});
+
+		this.systemQueue.add('integrationDaemon', {
+		}, {
+			repeat: { every: 1000 * 60 * 60 },
+			removeOnComplete: true,
+		});
+
+		// 初回実行
+		this.systemQueue.add('integrationDaemon', {
+		}, {
+			delay: 1000 * 10,
+			removeOnComplete: true,
+		})
 	}
 
 	@bindThis

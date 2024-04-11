@@ -21,6 +21,8 @@ import type { MiPage } from '@/models/Page.js';
 import type { MiWebhook } from '@/models/Webhook.js';
 import type { MiMeta } from '@/models/Meta.js';
 import { MiAvatarDecoration, MiReversiGame, MiRole, MiRoleAssignment } from '@/models/_.js';
+import type { PatreonMembers } from '@/core/integrations/PatreonManagementService.js';
+import type { FanboxMembers } from '@/core/integrations/FanboxManagementService.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
@@ -209,6 +211,8 @@ type SerializedAll<T> = {
 	[K in keyof T]: Serialized<T[K]>;
 };
 
+type MapToRecord<T> = T extends Map<string, infer V> ? Record<string, V> : never;
+
 export interface InternalEventTypes {
 	userChangeSuspendedState: { id: MiUser['id']; isSuspended: MiUser['isSuspended']; };
 	userChangeDeletedState: { id: MiUser['id']; isDeleted: MiUser['isDeleted']; };
@@ -244,6 +248,10 @@ export interface InternalEventTypes {
 	unmute: { muterId: MiUser['id']; muteeId: MiUser['id']; };
 	userListMemberAdded: { userListId: MiUserList['id']; memberId: MiUser['id']; };
 	userListMemberRemoved: { userListId: MiUserList['id']; memberId: MiUser['id']; };
+	patreonMembersUpdated: MapToRecord<PatreonMembers>;
+	patreonMembersUpdating: never;
+	fanboxMembersUpdated: MapToRecord<FanboxMembers>;
+	fanboxMembersUpdating: never;
 }
 
 // name/messages(spec) pairs dictionary

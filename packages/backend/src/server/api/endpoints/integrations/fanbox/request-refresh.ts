@@ -26,7 +26,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 		private fanboxManagementService: FanboxManagementService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			this.fanboxManagementService.requestUpdateCache();
+			this.fanboxManagementService.update();
 		});
 	}
 }

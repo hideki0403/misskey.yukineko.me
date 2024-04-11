@@ -40,6 +40,7 @@ import { CleanChartsProcessorService } from './processors/CleanChartsProcessorSe
 import { CheckExpiredMutingsProcessorService } from './processors/CheckExpiredMutingsProcessorService.js';
 import { CleanProcessorService } from './processors/CleanProcessorService.js';
 import { AggregateRetentionProcessorService } from './processors/AggregateRetentionProcessorService.js';
+import { IntegrationDaemonProcessorService } from './processors/IntegrationDaemonProcessorService.js';
 import { QueueLoggerService } from './QueueLoggerService.js';
 import { QUEUE, baseQueueOptions } from './const.js';
 
@@ -116,6 +117,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		private resyncChartsProcessorService: ResyncChartsProcessorService,
 		private cleanChartsProcessorService: CleanChartsProcessorService,
 		private aggregateRetentionProcessorService: AggregateRetentionProcessorService,
+		private integrationDaemonProcessorService: IntegrationDaemonProcessorService,
 		private checkExpiredMutingsProcessorService: CheckExpiredMutingsProcessorService,
 		private cleanProcessorService: CleanProcessorService,
 	) {
@@ -146,6 +148,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 				case 'aggregateRetention': return this.aggregateRetentionProcessorService.process();
 				case 'checkExpiredMutings': return this.checkExpiredMutingsProcessorService.process();
 				case 'clean': return this.cleanProcessorService.process();
+				case 'integrationDaemon': return this.integrationDaemonProcessorService.process();
 				default: throw new Error(`unrecognized job type ${job.name} for system`);
 			}
 		}, {

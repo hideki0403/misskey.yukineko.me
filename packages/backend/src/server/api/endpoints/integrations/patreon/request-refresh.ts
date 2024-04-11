@@ -26,7 +26,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 		private patreonManagementService: PatreonManagementService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			this.patreonManagementService.requestUpdateCache();
+			this.patreonManagementService.update();
 		});
 	}
 }

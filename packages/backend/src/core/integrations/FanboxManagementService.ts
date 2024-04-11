@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Not } from 'typeorm';
-import fetch from 'node-fetch';
+import Redis from 'ioredis';
 import { MetaService } from '@/core/MetaService.js';
 import type { UserProfilesRepository, MiUser } from '@/models/_.js';
 import { HttpRequestService } from '@/core/HttpRequestService.js';
@@ -8,77 +8,95 @@ import { StatusError } from '@/misc/status-error.js';
 import { DI } from '@/di-symbols.js';
 import type Logger from '@/logger.js';
 import { LoggerService } from '@/core/LoggerService.js';
+import { GlobalEventService, GlobalEvents } from '@/core/GlobalEventService.js';
+import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
+type SupporterUser = {
+	username: string,
+	name: string,
+	avatarUrl: string,
+}
+
 type FanboxMember = {
 	amounts: number,
-	user: MiUser,
-	isHideFromSupporterPage: boolean,
+	hide: boolean,
+	user: SupporterUser,
 }
+
+export type FanboxMembers = Map<string, FanboxMember>;
 
 @Injectable()
 export class FanboxManagementService implements OnApplicationShutdown {
-	private intervalId: NodeJS.Timeout;
-	private timeoutId: NodeJS.Timeout;
+	private cache: FanboxMembers = new Map();
 	private logger: Logger;
-	private cache: Record<string, FanboxMember> = {};
 	private cacheLastUpdate = 0;
-	private isWaitingToUpdate = false;
-	private isUpdating = false;
 
 	constructor(
+		@Inject(DI.redisForSub)
+		private redisForSub: Redis.Redis,
+
 		@Inject(DI.userProfilesRepository)
 		private userProfilesRepository: UserProfilesRepository,
 
 		private metaService: MetaService,
 		private httpRequestService: HttpRequestService,
 		private loggerService: LoggerService,
+		private globalEventService: GlobalEventService,
+		private userEntityService: UserEntityService,
 	) {
 		this.logger = this.loggerService.getLogger('fanbox-manager');
-		this.start();
+		this.redisForSub.on('message', this.onMessage);
 	}
 
 	@bindThis
-	private async start(): Promise<void> {
-		this.updateCache();
+	private async onMessage(_: string, data: string): Promise<void> {
+		const obj = JSON.parse(data);
 
-		// 1時間おきにキャッシュを更新する
-		this.intervalId = setInterval(this.updateCache, 1000 * 60 * 60);
+		if (obj.channel === 'internal') {
+			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
+
+			switch (type) {
+				case 'fanboxMembersUpdated': {
+					this.cache = new Map(Object.entries(body));
+					this.cacheLastUpdate = Date.now();
+					break;
+				}
+
+				case 'fanboxMembersUpdating': {
+					this.cacheLastUpdate = Date.now();
+					break;
+				}
+
+				default: break;
+			}
+		}
 	}
 
 	@bindThis
 	public amountsValue(user: MiUser): number {
-		const target = this.cache[user.id];
+		const target = this.cache.get(user.id);
 		return target?.amounts ?? 0;
 	}
 
 	@bindThis
-	public getFanboxUsers() {
+	public get() {
 		return this.cache;
 	}
 
 	@bindThis
-	public requestUpdateCache(): void {
-		// 最後に更新してから5分経過していなければキューに追加
-		if (Date.now() - this.cacheLastUpdate < 1000 * 60 * 5 && !this.isWaitingToUpdate) {
-			this.isWaitingToUpdate = true;
-			const waitTime = this.cacheLastUpdate + (1000 * 60 * 5) - Date.now();
-			this.logger.debug(`Refresh request received. next refresh is after ${waitTime}ms`);
-			this.timeoutId = setTimeout(this.updateCache, waitTime);
-			return;
-		}
+	public async update() {
+		// 最後に更新してから5分経過していなければ更新しない
+		if (Date.now() - this.cacheLastUpdate < 1000 * 60 * 5) return;
 
-		this.updateCache();
-	}
+		// 排他的に更新したいのでイベントを発行
+		this.globalEventService.publishInternalEvent('fanboxMembersUpdating');
 
-	@bindThis
-	private async updateCache(): Promise<void> {
-		if (this.isUpdating) return;
 		const meta = await this.metaService.fetch();
 		if (!meta.enableFanboxIntegration) return;
 
-		this.isUpdating = true;
+		const usersList: FanboxMembers = new Map();
 
 		try {
 			const members = await this.fetchUsers();
@@ -93,30 +111,31 @@ export class FanboxManagementService implements OnApplicationShutdown {
 				},
 			});
 
-			const usersList = {} as Record<string, FanboxMember>;
-
-			for (const user of users) {
-				const pixivId = user.integrations.fanbox?.id;
+			for (const userProfile of users) {
+				const pixivId = userProfile.integrations.fanbox?.id;
 				const amounts = pixivId ? members[pixivId] : null;
-				if (!amounts) continue;
-				usersList[user.userId] = {
+				if (!amounts || !userProfile.user) continue;
+				const user = userProfile.user;
+
+				usersList.set(user.id, {
 					amounts,
-					user: user.user as MiUser,
-					isHideFromSupporterPage: user.hideFromSupporterPage,
-				};
+					hide: userProfile.hideFromSupporterPage,
+					user: {
+						username: user.username,
+						name: user.name ?? user.username,
+						avatarUrl: user.avatar?.url ?? this.userEntityService.getIdenticonUrl(user),
+					},
+				});
 			}
 
 			this.logger.info(`Found ${Object.keys(usersList).length} fanbox supporter(s)`);
-			this.cache = usersList;
 			this.logger.info('Cache updated.');
 		} catch (err: any) {
 			this.logger.error('Failed to update fanbox supporter cache');
 			this.logger.error(err);
 		}
 
-		this.cacheLastUpdate = Date.now();
-		this.isWaitingToUpdate = false;
-		this.isUpdating = false;
+		this.globalEventService.publishInternalEvent('fanboxMembersUpdated', Object.fromEntries(usersList));
 	}
 
 	@bindThis
@@ -164,7 +183,6 @@ export class FanboxManagementService implements OnApplicationShutdown {
 	}
 
 	async onApplicationShutdown(): Promise<void> {
-		clearInterval(this.intervalId);
-		clearTimeout(this.timeoutId);
+		this.redisForSub.off('message', this.onMessage);
 	}
 }

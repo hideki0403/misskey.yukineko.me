@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Not } from 'typeorm';
+import Redis from 'ioredis';
 import { OAuth2 } from 'oauth';
 import { MetaService } from '@/core/MetaService.js';
 import type { UserProfilesRepository, MiUser, RoleAssignmentsRepository } from '@/models/_.js';
@@ -8,27 +9,36 @@ import { StatusError } from '@/misc/status-error.js';
 import { DI } from '@/di-symbols.js';
 import type Logger from '@/logger.js';
 import { LoggerService } from '@/core/LoggerService.js';
+import { GlobalEventService, GlobalEvents } from '@/core/GlobalEventService.js';
+import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
+type SupporterUser = {
+	username: string,
+	name: string,
+	avatarUrl: string,
+}
+
 type PatreonMember = {
 	amounts: number,
-	user: MiUser,
+	hide: boolean,
 	isPatreon: boolean,
-	isHideFromSupporterPage: boolean,
+	user: SupporterUser,
 }
+
+export type PatreonMembers = Map<string, PatreonMember>;
 
 @Injectable()
 export class PatreonManagementService implements OnApplicationShutdown {
-	private intervalId: NodeJS.Timeout;
-	private timeoutId: NodeJS.Timeout;
+	private cache: PatreonMembers = new Map();
 	private logger: Logger;
-	private cache: Record<string, PatreonMember> = {};
 	private cacheLastUpdate = 0;
-	private isWaitingToUpdate = false;
-	private isUpdating = false;
 
 	constructor(
+		@Inject(DI.redisForSub)
+		private redisForSub: Redis.Redis,
+
 		@Inject(DI.userProfilesRepository)
 		private userProfilesRepository: UserProfilesRepository,
 
@@ -38,58 +48,65 @@ export class PatreonManagementService implements OnApplicationShutdown {
 		private metaService: MetaService,
 		private httpRequestService: HttpRequestService,
 		private loggerService: LoggerService,
+		private globalEventService: GlobalEventService,
+		private userEntityService: UserEntityService,
 	) {
 		this.logger = this.loggerService.getLogger('patreon-manager');
-		this.start();
+		this.redisForSub.on('message', this.onMessage);
 	}
 
 	@bindThis
-	private async start(): Promise<void> {
-		this.updateCache();
+	private async onMessage(_: string, data: string): Promise<void> {
+		const obj = JSON.parse(data);
 
-		// 1時間おきにキャッシュを更新する
-		this.intervalId = setInterval(this.updateCache, 1000 * 60 * 60);
+		if (obj.channel === 'internal') {
+			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
+
+			switch (type) {
+				case 'patreonMembersUpdated': {
+					this.cache = new Map(Object.entries(body));
+					this.cacheLastUpdate = Date.now();
+					break;
+				}
+
+				case 'patreonMembersUpdating': {
+					this.cacheLastUpdate = Date.now();
+					break;
+				}
+
+				default: break;
+			}
+		}
 	}
 
 	@bindThis
 	public amountsValue(user: MiUser): number {
-		const target = this.cache[user.id];
+		const target = this.cache.get(user.id);
 		if (!target) return 0;
 
 		return target.isPatreon ? target.amounts : 0;
 	}
 
 	@bindThis
-	public getPatreonUsers(): Record<string, PatreonMember> {
+	public get() {
 		return this.cache;
 	}
 
 	@bindThis
-	public requestUpdateCache(): void {
-		// 最後に更新してから5分経過していなければキューに追加
-		if (Date.now() - this.cacheLastUpdate < 1000 * 60 * 5 && !this.isWaitingToUpdate) {
-			this.isWaitingToUpdate = true;
-			const waitTime = this.cacheLastUpdate + (1000 * 60 * 5) - Date.now();
-			this.logger.debug(`Refresh request received. next refresh is after ${waitTime}ms`);
-			this.timeoutId = setTimeout(this.updateCache, waitTime);
-			return;
-		}
+	public async update() {
+		// 最後に更新してから5分経過していなければ更新しない
+		if (Date.now() - this.cacheLastUpdate < 1000 * 60 * 5) return;
 
-		this.updateCache();
-	}
+		// 排他的に更新したいのでイベントを発行
+		this.globalEventService.publishInternalEvent('patreonMembersUpdating');
 
-	@bindThis
-	private async updateCache(): Promise<void> {
-		if (this.isUpdating) return;
 		const meta = await this.metaService.fetch();
-		if (!meta.enableSupporterPage) return;
+		if (!meta.enablePatreonIntegration) return;
 
-		this.isUpdating = true;
-
-		const usersList = {} as Record<string, PatreonMember>;
+		const usersList: PatreonMembers = new Map();
 
 		try {
-			const members = meta.enablePatreonIntegration ? await this.fetchUsers() : {};
+			const members = await this.fetchUsers();
 			const users = await this.userProfilesRepository.find({
 				where: {
 					integrations: Not('{}'),
@@ -101,16 +118,22 @@ export class PatreonManagementService implements OnApplicationShutdown {
 				},
 			});
 
-			for (const user of users) {
-				const patreonId = user.integrations.patreon?.id;
+			for (const userProfile of users) {
+				const patreonId = userProfile.integrations.patreon?.id;
 				const amounts = patreonId ? members[patreonId] : null;
-				if (!amounts) continue;
-				usersList[user.userId] = {
+				if (!amounts || !userProfile.user) continue;
+				const user = userProfile.user;
+
+				usersList.set(user.id, {
 					amounts,
-					user: user.user as MiUser,
 					isPatreon: true,
-					isHideFromSupporterPage: user.hideFromSupporterPage,
-				};
+					hide: userProfile.hideFromSupporterPage,
+					user: {
+						username: user.username,
+						name: user.name ?? user.username,
+						avatarUrl: user.avatar?.url ?? this.userEntityService.getIdenticonUrl(user),
+					},
+				});
 			}
 
 			this.logger.info(`Found ${Object.keys(usersList).length} patreon(s)`);
@@ -137,21 +160,20 @@ export class PatreonManagementService implements OnApplicationShutdown {
 				const user = assign.user as MiUser;
 				const userProfile = await this.userProfilesRepository.findOneBy({ userId: user.id });
 
-				usersList[user.id] = {
-					user,
+				usersList.set(user.id, {
 					amounts: isNaN(roleAmounts) ? 500 : roleAmounts,
 					isPatreon: false,
-					isHideFromSupporterPage: userProfile?.hideFromSupporterPage ?? false,
-				};
+					hide: userProfile?.hideFromSupporterPage ?? false,
+					user: {
+						username: user.username,
+						name: user.name ?? user.username,
+						avatarUrl: user.avatar?.url ?? this.userEntityService.getIdenticonUrl(user),
+					},
+				});
 			});
 		}
 
-		this.cache = usersList;
-		this.cacheLastUpdate = Date.now();
-		this.isWaitingToUpdate = false;
-		this.isUpdating = false;
-
-		this.logger.info('Cache updated.');
+		this.globalEventService.publishInternalEvent('patreonMembersUpdated', Object.fromEntries(usersList));
 	}
 
 	@bindThis
@@ -257,7 +279,6 @@ export class PatreonManagementService implements OnApplicationShutdown {
 	}
 
 	async onApplicationShutdown(): Promise<void> {
-		clearInterval(this.intervalId);
-		clearTimeout(this.timeoutId);
+		this.redisForSub.off('message', this.onMessage);
 	}
 }
