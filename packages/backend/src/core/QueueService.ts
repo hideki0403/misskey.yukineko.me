@@ -58,6 +58,12 @@ export class QueueService {
 			removeOnComplete: true,
 		});
 
+		this.systemQueue.add('integrationDaemon', {
+		}, {
+			repeat: { pattern: '5 0 * * *' },
+			removeOnComplete: true,
+		});
+
 		this.systemQueue.add('clean', {
 		}, {
 			repeat: { pattern: '0 0 * * *' },

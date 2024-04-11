@@ -39,6 +39,7 @@ import { TickChartsProcessorService } from './processors/TickChartsProcessorServ
 import { AggregateRetentionProcessorService } from './processors/AggregateRetentionProcessorService.js';
 import { ExportFavoritesProcessorService } from './processors/ExportFavoritesProcessorService.js';
 import { RelationshipProcessorService } from './processors/RelationshipProcessorService.js';
+import { IntegrationDaemonProcessorService } from './processors/IntegrationDaemonProcessorService.js';
 
 @Module({
 	imports: [
@@ -78,6 +79,7 @@ import { RelationshipProcessorService } from './processors/RelationshipProcessor
 		DeliverProcessorService,
 		InboxProcessorService,
 		AggregateRetentionProcessorService,
+		IntegrationDaemonProcessorService,
 		QueueProcessorService,
 	],
 	exports: [
