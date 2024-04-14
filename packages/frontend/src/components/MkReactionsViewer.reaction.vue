@@ -13,7 +13,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	@contextmenu.prevent.stop="menu"
 >
 	<MkReactionIcon :class="defaultStore.state.limitWidthOfReaction ? $style.limitWidth : ''" :reaction="reaction" :emojiUrl="note.reactionEmojis[reaction.substring(1, reaction.length - 1)]"/>
-	<span :class="$style.count">{{ count }}</span>
+	<span v-if="!hideReactionCount" :class="$style.count">{{ count }}</span>
 </button>
 </template>
 
@@ -67,6 +67,18 @@ const canToggle = computed(() => {
 });
 const canGetInfo = computed(() => !props.reaction.match(/@\w/) && props.reaction.includes(':'));
 
+const plainReaction = computed(() => customEmojisMap.has(emojiName.value) ? getReactionName(props.reaction, true) : props.reaction);
+
+const hideReactionCount = computed(() => {
+	switch (defaultStore.state.hideReactionCount) {
+		case 'none': return false;
+		case 'all': return true;
+		case 'self': return props.note.userId === $i?.id;
+		case 'others': return props.note.userId !== $i?.id;
+		default: return false;
+	}
+});
+
 async function toggleReaction() {
 	if (!canToggle.value) return;
 
@@ -118,9 +130,7 @@ async function toggleReaction() {
 }
 
 async function menu(ev) {
-	if (!canGetInfo.value) return;
-
-	os.popupMenu([{
+	os.popupMenu([...(canGetInfo.value ? [{
 		text: i18n.ts.info,
 		icon: 'ti ti-info-circle',
 		action: async () => {
@@ -130,7 +140,13 @@ async function menu(ev) {
 				}),
 			});
 		},
-	}], ev.currentTarget ?? ev.target);
+	}] : []), ...(emoji.value && !defaultStore.state.reactions.includes(plainReaction.value) ? [{
+		text: i18n.ts.addToEmojiPicker,
+		icon: 'ti ti-plus',
+		action: async () => {
+			defaultStore.set('reactions', [...defaultStore.state.reactions, plainReaction.value]);
+		},
+	}] : [])], ev.currentTarget ?? ev.target);
 }
 
 function anime() {
@@ -152,12 +168,12 @@ onMounted(() => {
 
 if (!mock) {
 	useTooltip(buttonEl, async (showing) => {
-		const reactions = await misskeyApiGet('notes/reactions', {
+		const reactions = !defaultStore.state.hideReactionUsers ? await misskeyApiGet('notes/reactions', {
 			noteId: props.note.id,
 			type: props.reaction,
 			limit: 10,
 			_cacheKey_: props.count,
-		});
+		}) : [];
 
 		const users = reactions.map(x => x.user);
 

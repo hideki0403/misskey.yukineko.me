@@ -128,7 +128,7 @@ export class FanboxManagementService implements OnApplicationShutdown {
 				});
 			}
 
-			this.logger.info(`Found ${Object.keys(usersList).length} fanbox supporter(s)`);
+			this.logger.info(`Found ${usersList.size} fanbox supporter(s)`);
 			this.logger.info('Cache updated.');
 		} catch (err: any) {
 			this.logger.error('Failed to update fanbox supporter cache');

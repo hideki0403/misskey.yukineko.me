@@ -103,6 +103,12 @@ export const meta = {
 			id: '05655b05-5a09-47c3-af56-de0c0900791a',
 		},
 
+		cannotScheduleDeleteLaterThanOneYear: {
+			message: 'Scheduled delete time is later than one year.',
+			code: 'CANNOT_SCHEDULE_DELETE_LATER_THAN_ONE_YEAR',
+			id: 'b02b5edb-2741-4841-b692-d9893f1e6515',
+		},
+
 		noSuchChannel: {
 			message: 'No such channel.',
 			code: 'NO_SUCH_CHANNEL',
@@ -374,6 +380,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					}
 				} else if (typeof ps.scheduledDelete.deleteAfter === 'number') {
 					ps.scheduledDelete.deleteAt = Date.now() + ps.scheduledDelete.deleteAfter;
+				}
+
+				if (ps.scheduledDelete.deleteAt && ps.scheduledDelete.deleteAt > Date.now() + ms('1year')) {
+					throw new ApiError(meta.errors.cannotScheduleDeleteLaterThanOneYear);
 				}
 			}
 

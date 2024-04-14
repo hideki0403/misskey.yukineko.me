@@ -136,7 +136,7 @@ export class PatreonManagementService implements OnApplicationShutdown {
 				});
 			}
 
-			this.logger.info(`Found ${Object.keys(usersList).length} patreon(s)`);
+			this.logger.info(`Found ${usersList.size} patreon(s)`);
 		} catch (err: any) {
 			this.logger.error('Failed to fetch patreon users');
 			this.logger.error(err);

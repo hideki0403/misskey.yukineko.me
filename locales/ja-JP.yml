@@ -1314,12 +1314,17 @@ surrender: "やめる"
 gameRetry: "リトライ"
 scheduledNoteDelete: "ノートの自己消滅"
 noteDeletationAt: "このノートは{time}に消滅します"
+cannotScheduleLaterThanOneYear: "1年以上先の日時を指定することはできません"
 hideActivity: "アクティビティを非公開にする"
 hideActivityDescription: "自分のプロフィールのアクティビティ (概要/アクティビティタブ) を他人が見れないようにします。このオプションを有効にしても、自分であればプロフィールのアクティビティタブから引き続き閲覧できます。"
 channelAnnouncementDescription: "このお知らせはチャンネルのタイムライン上部に表示されます。最初の1行がタイトルとして表示され、2行目以降はお知らせをタップすることで表示されるようになります。"
 postForm: "投稿フォーム"
 postFormBottomSettingsDescription: "投稿フォームの下部に表示される項目の並び替えが出来ます。項目をクリックすると削除できます。"
 clearPost: "投稿フォームをリセット"
+addToEmojiPicker: "絵文字ピッカーに追加"
+hideReactionCount: "リアクション数の非表示"
+hideReactionUsers: 誰がリアクションをしたのかを非表示にする
+hideReactionUsersDescription: "リアクションをホバーした際のユーザー一覧と、ノート詳細ページのリアクションタブにあるリアクションをしたユーザー一覧を非表示にします"
 
 _bubbleGame:
   howToPlay: "遊び方"
@@ -2737,3 +2742,8 @@ _offlineScreen:
   title: "オフライン - サーバーに接続できません"
   header: "サーバーに接続できません"
 
+_hideReactionCount:
+  none: "非表示にしない"
+  self: "自分のノートのみ"
+  others: "自分以外のノートのみ"
+  all: "全てのノート"

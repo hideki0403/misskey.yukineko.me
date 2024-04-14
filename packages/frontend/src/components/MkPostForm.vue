@@ -252,6 +252,7 @@ const maxTextLength = computed((): number => {
 
 const canPost = computed((): boolean => {
 	return !props.mock && !posting.value && !posted.value &&
+		(scheduledNoteDelete.value ? scheduledNoteDelete.value.isValid : true) &&
 		(1 <= textLength.value || 1 <= files.value.length || !!poll.value || !!props.renote) &&
 		(textLength.value <= maxTextLength.value) &&
 		(!poll.value || poll.value.choices.length >= 2);
@@ -451,6 +452,7 @@ function toggleScheduledNoteDelete() {
 		scheduledNoteDelete.value = {
 			deleteAt: null,
 			deleteAfter: null,
+			isValid: true,
 		};
 	}
 }
@@ -1039,6 +1041,7 @@ onMounted(() => {
 				scheduledNoteDelete.value = {
 					deleteAt: init.deleteAt ? (new Date(init.deleteAt)).getTime() : null,
 					deleteAfter: null,
+					isValid: true,
 				};
 			}
 			visibility.value = init.visibility;
