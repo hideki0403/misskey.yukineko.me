@@ -24,7 +24,6 @@
 			<span v-if="menuIndicated" :class="$style.navButtonIndicator"><i class="_indicatorCircle"></i></span>
 		</button>
 		<button :class="$style.navButton" class="_button" @click="isRoot ? top() : mainRouter.push('/')"><i :class="$style.navButtonIcon" class="ti ti-home"></i></button>
-		<i :class="$style.navButtonIcon" class="ti ti-home"></i>
 		<button :class="$style.postButton" class="_button" @click="os.post()"><i :class="$style.navButtonIcon" class="ti ti-pencil"></i></button>
 	</div>
 

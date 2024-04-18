@@ -13,6 +13,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<template #caption>{{ avatarDecoration.description }}</template>
 
 				<div class="_gaps_m">
+					<MkButton rounded style="margin: 0 auto;" @click="selectImage(avatarDecoration, $event)">{{ i18n.ts.selectFile }}</MkButton>
 					<MkInput v-model="avatarDecoration.name">
 						<template #label>{{ i18n.ts.name }}</template>
 					</MkInput>
@@ -39,6 +40,7 @@ import * as Misskey from 'misskey-js';
 import MkButton from '@/components/MkButton.vue';
 import MkInput from '@/components/MkInput.vue';
 import MkTextarea from '@/components/MkTextarea.vue';
+import { selectFile } from '@/scripts/select-file.js';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import { i18n } from '@/i18n.js';
@@ -46,6 +48,12 @@ import { definePageMetadata } from '@/scripts/page-metadata.js';
 import MkFolder from '@/components/MkFolder.vue';
 
 const avatarDecorations = ref<Misskey.entities.AdminAvatarDecorationsListResponse>([]);
+
+async function selectImage(decoration, ev) {
+	const file = await selectFile(ev.currentTarget ?? ev.target, null);
+	decoration.name = file.name.replace(/\.(.+)$/, '');
+	decoration.url = file.url;
+}
 
 function add() {
 	avatarDecorations.value.unshift({

@@ -5316,6 +5316,22 @@ export interface Locale extends ILocale {
      * リアクションをホバーした際のユーザー一覧と、ノート詳細ページのリアクションタブにあるリアクションをしたユーザー一覧を非表示にします
      */
     "hideReactionUsersDescription": string;
+    /**
+     * 下書き
+     */
+    "drafts": string;
+    /**
+     * 下書きの保存に関する動作
+     */
+    "draftSavingBehavior": string;
+    /**
+     * 下書きとして保存
+     */
+    "saveAsDraft": string;
+    /**
+     * 下書きを適用すると現在入力されている内容はリセットされます。よろしいですか？
+     */
+    "draftOverwriteConfirm": string;
     "_bubbleGame": {
         /**
          * 遊び方
@@ -10309,6 +10325,16 @@ export interface Locale extends ILocale {
          * 全てのノート
          */
         "all": string;
+    };
+    "_draftSavingBehavior": {
+        /**
+         * 自動的に保存する
+         */
+        "auto": string;
+        /**
+         * 都度確認する
+         */
+        "manual": string;
     };
 }
 declare const locales: {
