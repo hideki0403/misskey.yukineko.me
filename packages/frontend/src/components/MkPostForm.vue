@@ -301,6 +301,9 @@ const bottomItemActionDef: Record<keyof typeof bottomItemDef, {
 	clearPost: {
 		action: clear,
 	},
+	saveAsDraft: {
+		action: () => saveDraft(false),
+	},
 });
 
 watch(text, () => {
@@ -722,17 +725,17 @@ function onDrop(ev: DragEvent): void {
 	//#endregion
 }
 
-function saveDraft(auto = true) {
+async function saveDraft(auto = true) {
 	if (props.instant || props.mock) return;
 
 	if (auto && defaultStore.state.draftSavingBehavior !== 'auto') return;
 
 	if (!auto) {
 		// 手動での保存の場合は自動保存したものを削除した上で保存
-		noteDrafts.remove(draftType.value, $i.id, 'default', draftAuxId.value as string);
+		await noteDrafts.remove(draftType.value, $i.id, 'default', draftAuxId.value as string);
 	}
 
-	noteDrafts.set(draftType.value, $i.id, auto ? 'default' : Date.now().toString(), {
+	await noteDrafts.set(draftType.value, $i.id, auto ? 'default' : Date.now().toString(), {
 		text: text.value,
 		useCw: useCw.value,
 		cw: cw.value,
@@ -742,6 +745,10 @@ function saveDraft(auto = true) {
 		poll: poll.value,
 		scheduledNoteDelete: scheduledNoteDelete.value,
 	}, draftAuxId.value as string);
+
+	if (!auto) {
+		clear();
+	}
 }
 
 function deleteDraft() {
@@ -967,7 +974,7 @@ function cancel() {
 }
 
 async function closed() {
-	if (defaultStore.state.draftSavingBehavior === 'manual' && text.value !== '') {
+	if (defaultStore.state.draftSavingBehavior === 'manual' && (text.value !== '' || files.value.length > 0)) {
 		os.confirm({
 			type: 'question',
 			text: i18n.ts.saveConfirm,
