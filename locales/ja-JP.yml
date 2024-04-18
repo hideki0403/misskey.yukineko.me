@@ -1323,8 +1323,12 @@ postFormBottomSettingsDescription: "投稿フォームの下部に表示され�
 clearPost: "投稿フォームをリセット"
 addToEmojiPicker: "絵文字ピッカーに追加"
 hideReactionCount: "リアクション数の非表示"
-hideReactionUsers: 誰がリアクションをしたのかを非表示にする
+hideReactionUsers: "誰がリアクションをしたのかを非表示にする"
 hideReactionUsersDescription: "リアクションをホバーした際のユーザー一覧と、ノート詳細ページのリアクションタブにあるリアクションをしたユーザー一覧を非表示にします"
+drafts: "下書き"
+draftSavingBehavior: "下書きの保存に関する動作"
+saveAsDraft: "下書きとして保存"
+draftOverwriteConfirm: "下書きを適用すると現在入力されている内容はリセットされます。よろしいですか？"
 
 _bubbleGame:
   howToPlay: "遊び方"
@@ -2747,3 +2751,7 @@ _hideReactionCount:
   self: "自分のノートのみ"
   others: "自分以外のノートのみ"
   all: "全てのノート"
+
+_draftSavingBehavior:
+  auto: "自動的に保存する"
+  manual: "都度確認する"
