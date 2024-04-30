@@ -1,3 +1,12 @@
+## 1.36.2
+Release: 2024/05/01  
+Base: 2024.3.1  
+
+### セキュリティアップデート
+- 脆弱性に関する修正パッチの適用
+  - GHSA-m9qf-3pfj-2r86 (https://github.com/misskey-dev/misskey/commit/78ff90f2cc3bdb3b4119f51617614d1a32afd960)
+  - GHSA-2vxv-pv3m-3wvj (https://gist.github.com/tesaguri/f3c73f81bc000f669fc8adfab316603b)
+
 ## 1.36.1
 Release: 2024/04/19  
 Base: 2024.3.1  

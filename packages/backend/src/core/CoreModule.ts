@@ -130,7 +130,7 @@ import { ApMfmService } from './activitypub/ApMfmService.js';
 import { ApRendererService } from './activitypub/ApRendererService.js';
 import { ApRequestService } from './activitypub/ApRequestService.js';
 import { ApResolverService } from './activitypub/ApResolverService.js';
-import { LdSignatureService } from './activitypub/LdSignatureService.js';
+import { JsonLdService } from './activitypub/JsonLdService.js';
 import { RemoteLoggerService } from './RemoteLoggerService.js';
 import { RemoteUserResolveService } from './RemoteUserResolveService.js';
 import { WebfingerService } from './WebfingerService.js';
@@ -276,7 +276,7 @@ const $ApMfmService: Provider = { provide: 'ApMfmService', useExisting: ApMfmSer
 const $ApRendererService: Provider = { provide: 'ApRendererService', useExisting: ApRendererService };
 const $ApRequestService: Provider = { provide: 'ApRequestService', useExisting: ApRequestService };
 const $ApResolverService: Provider = { provide: 'ApResolverService', useExisting: ApResolverService };
-const $LdSignatureService: Provider = { provide: 'LdSignatureService', useExisting: LdSignatureService };
+const $JsonLdService: Provider = { provide: 'JsonLdService', useExisting: JsonLdService };
 const $RemoteLoggerService: Provider = { provide: 'RemoteLoggerService', useExisting: RemoteLoggerService };
 const $RemoteUserResolveService: Provider = { provide: 'RemoteUserResolveService', useExisting: RemoteUserResolveService };
 const $WebfingerService: Provider = { provide: 'WebfingerService', useExisting: WebfingerService };
@@ -421,7 +421,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		ApRendererService,
 		ApRequestService,
 		ApResolverService,
-		LdSignatureService,
+		JsonLdService,
 		RemoteLoggerService,
 		RemoteUserResolveService,
 		WebfingerService,
@@ -562,7 +562,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$ApRendererService,
 		$ApRequestService,
 		$ApResolverService,
-		$LdSignatureService,
+		$JsonLdService,
 		$RemoteLoggerService,
 		$RemoteUserResolveService,
 		$WebfingerService,
@@ -703,7 +703,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		ApRendererService,
 		ApRequestService,
 		ApResolverService,
-		LdSignatureService,
+		JsonLdService,
 		RemoteLoggerService,
 		RemoteUserResolveService,
 		WebfingerService,
@@ -843,7 +843,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$ApRendererService,
 		$ApRequestService,
 		$ApResolverService,
-		$LdSignatureService,
+		$JsonLdService,
 		$RemoteLoggerService,
 		$RemoteUserResolveService,
 		$WebfingerService,
