@@ -11,6 +11,7 @@ export const meta = {
 	tags: ['meta'],
 
 	requireCredential: false,
+	allowGet: true,
 
 	res: {
 		type: 'object',
