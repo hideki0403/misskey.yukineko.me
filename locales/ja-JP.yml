@@ -1329,6 +1329,7 @@ drafts: "下書き"
 draftSavingBehavior: "下書きの保存に関する動作"
 saveAsDraft: "下書きとして保存"
 draftOverwriteConfirm: "下書きを適用すると現在入力されている内容はリセットされます。よろしいですか？"
+defaultScheduledNoteDelete: "デフォルトでノートが自己消滅するように"
 
 _bubbleGame:
   howToPlay: "遊び方"

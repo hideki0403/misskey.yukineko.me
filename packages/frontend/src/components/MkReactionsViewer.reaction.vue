@@ -140,7 +140,7 @@ async function menu(ev) {
 				}),
 			});
 		},
-	}] : []), ...(emoji.value && !defaultStore.state.reactions.includes(plainReaction.value) ? [{
+	}] : []), ...(isAvailable.value && !defaultStore.state.reactions.includes(plainReaction.value) ? [{
 		text: i18n.ts.addToEmojiPicker,
 		icon: 'ti ti-plus',
 		action: async () => {

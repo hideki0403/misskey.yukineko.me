@@ -5332,6 +5332,10 @@ export interface Locale extends ILocale {
      * 下書きを適用すると現在入力されている内容はリセットされます。よろしいですか？
      */
     "draftOverwriteConfirm": string;
+    /**
+     * デフォルトでノートが自己消滅するように
+     */
+    "defaultScheduledNoteDelete": string;
     "_bubbleGame": {
         /**
          * 遊び方
