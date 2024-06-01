@@ -293,12 +293,6 @@ export class MiMeta {
 	})
 	public enableSensitiveMediaDetectionForVideos: boolean;
 
-	@Column('varchar', {
-		length: 1024,
-		nullable: true,
-	})
-	public summalyProxy: string | null;
-
 	@Column('boolean', {
 		default: false,
 	})
@@ -448,6 +442,12 @@ export class MiMeta {
 		nullable: true,
 	})
 	public privacyPolicyUrl: string | null;
+
+	@Column('varchar', {
+		length: 1024,
+		nullable: true,
+	})
+	public inquiryUrl: string | null;
 
 	@Column('varchar', {
 		length: 8192,
@@ -700,4 +700,36 @@ export class MiMeta {
 		default: true,
 	})
 	public blockMentionsFromUnfamiliarRemoteUsers: boolean;
+
+	@Column('boolean', {
+		default: true,
+	})
+	public urlPreviewEnabled: boolean;
+
+	@Column('integer', {
+		default: 10000,
+	})
+	public urlPreviewTimeout: number;
+
+	@Column('bigint', {
+		default: 1024 * 1024 * 10,
+	})
+	public urlPreviewMaximumContentLength: number;
+
+	@Column('boolean', {
+		default: true,
+	})
+	public urlPreviewRequireContentLength: boolean;
+
+	@Column('varchar', {
+		length: 1024,
+		nullable: true,
+	})
+	public urlPreviewSummaryProxyUrl: string | null;
+
+	@Column('varchar', {
+		length: 1024,
+		nullable: true,
+	})
+	public urlPreviewUserAgent: string | null;
 }

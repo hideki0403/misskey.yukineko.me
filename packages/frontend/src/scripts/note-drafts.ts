@@ -18,6 +18,7 @@ export type NoteDraft = {
 		files: Misskey.entities.DriveFile[];
 		poll: PollEditorModelValue | null;
 		scheduledNoteDelete: DeleteScheduleEditorModelValue | null;
+		visibleUserIds?: string[];
 	};
 };
 

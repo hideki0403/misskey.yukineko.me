@@ -9,7 +9,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<XTimeline v-if="!instance.disableEntranceFeatureTimeline" class="tl"/>
 	<div class="shape1"></div>
 	<div class="shape2"></div>
-	<img :src="misskeysvg" class="misskey"/>
+	<div class="logo-wrapper">
+		<div class="powered-by">Powered by</div>
+		<img :src="misskeysvg" class="misskey"/>
+	</div>
 	<div class="emojis">
 		<MkEmoji :normal="true" :noStyle="true" emoji="👍"/>
 		<MkEmoji :normal="true" :noStyle="true" emoji="❤"/>
@@ -40,11 +43,11 @@ import { instance } from '@/instance.js';
 import MarqueeText from '@/components/MkMarquee.vue';
 import MkFeaturedPhotos from '@/components/MkFeaturedPhotos.vue';
 import misskeysvg from '/client-assets/misskey.svg';
-import { misskeyApi, misskeyApiGet } from '@/scripts/misskey-api.js';
+import { misskeyApiGet } from '@/scripts/misskey-api.js';
 import MkVisitorDashboard from '@/components/MkVisitorDashboard.vue';
 import { getProxiedImageUrl } from '@/scripts/media-proxy.js';
+import { instance as meta } from '@/instance.js';
 
-const meta = ref<Misskey.entities.MetaResponse>();
 const instances = ref<Misskey.entities.FederationInstance[]>();
 
 function getInstanceIcon(instance: Misskey.entities.FederationInstance): string {
@@ -53,10 +56,6 @@ function getInstanceIcon(instance: Misskey.entities.FederationInstance): string 
 	}
 	return getProxiedImageUrl(instance.iconUrl, 'preview');
 }
-
-misskeyApi('meta', { detail: true }).then(_meta => {
-	meta.value = _meta;
-});
 
 misskeyApiGet('federation/instances', {
 	sort: '+pubSub',
@@ -114,14 +113,24 @@ misskeyApiGet('federation/instances', {
 		opacity: 0.5;
 	}
 
-	> .misskey {
+	> .logo-wrapper {
 		position: fixed;
-		top: 42px;
-		left: 42px;
-		width: 140px;
+		top: 36px;
+		left: 36px;
+		flex: auto;
+		color: #fff;
+		user-select: none;
+		pointer-events: none;
 
-		@media (max-width: 450px) {
-			width: 130px;
+		> .powered-by {
+			margin-bottom: 2px;
+		}
+
+		> .misskey {
+			width: 140px;
+			@media (max-width: 450px) {
+				width: 130px;
+			}
 		}
 	}
 

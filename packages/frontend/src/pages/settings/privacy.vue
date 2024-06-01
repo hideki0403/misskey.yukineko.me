@@ -63,10 +63,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 		{{ i18n.ts.makeExplorable }}
 		<template #caption>{{ i18n.ts.makeExplorableDescription }}</template>
 	</MkSwitch>
-	<MkSwitch v-model="filenameRandomize">
-		<template #label>{{ i18n.ts.filenameRandomize }}<span class="_beta">{{ i18n.ts.originalFeature }}</span></template>
-		<template #caption>{{ i18n.ts.filenameRandomizeDescription }}</template>
-	</MkSwitch>
 	<MkSwitch v-model="hideFromSupporterPage" @update:modelValue="save()">
 		<template #label>{{ i18n.ts.hideFromSupporterPage }}<span class="_beta">{{ i18n.ts.originalFeature }}</span></template>
 		<template #caption>{{ i18n.ts.hideFromSupporterPageDescription }}</template>
@@ -137,7 +133,6 @@ const defaultNoteLocalOnly = computed(defaultStore.makeGetterSetter('defaultNote
 const rememberNoteVisibility = computed(defaultStore.makeGetterSetter('rememberNoteVisibility'));
 const rememberReactionAcceptance = computed(defaultStore.makeGetterSetter('rememberReactionAcceptance'));
 const keepCw = computed(defaultStore.makeGetterSetter('keepCw'));
-const filenameRandomize = computed(defaultStore.makeGetterSetter('filenameRandomize'));
 
 async function reloadAsk() {
 	const { canceled } = await os.confirm({

@@ -71,6 +71,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<template #label>{{ i18n.ts.privacyPolicyUrl }}</template>
 					</MkInput>
 
+					<MkInput v-model="inquiryUrl" type="url">
+						<template #prefix><i class="ti ti-link"></i></template>
+						<template #label>{{ i18n.ts._serverSettings.inquiryUrl }}</template>
+						<template #caption>{{ i18n.ts._serverSettings.inquiryUrlDescription }}</template>
+					</MkInput>
+
 					<MkTextarea v-model="preservedUsernames">
 						<template #label>{{ i18n.ts.preservedUsernames }}</template>
 						<template #caption>{{ i18n.ts.preservedUsernamesDescription }}</template>
@@ -135,6 +141,7 @@ const hiddenTags = ref('');
 const tosUrl = ref<string | null>(null);
 const privacyPolicyUrl = ref<string | null>(null);
 const blockMentionsFromUnfamiliarRemoteUsers = ref(false);
+const inquiryUrl = ref<string | null>(null);
 
 async function init() {
 	const meta = await misskeyApi('admin/meta');
@@ -154,6 +161,7 @@ async function init() {
 	tosUrl.value = meta.tosUrl;
 	privacyPolicyUrl.value = meta.privacyPolicyUrl;
 	blockMentionsFromUnfamiliarRemoteUsers.value = meta.blockMentionsFromUnfamiliarRemoteUsers;
+	inquiryUrl.value = meta.inquiryUrl;
 }
 
 function save() {
@@ -169,6 +177,7 @@ function save() {
 		ageRestrictionThreshold: ageRestrictionThreshold.value,
 		tosUrl: tosUrl.value,
 		privacyPolicyUrl: privacyPolicyUrl.value,
+		inquiryUrl: inquiryUrl.value,
 		sensitiveWords: sensitiveWords.value.split('\n'),
 		prohibitedWords: prohibitedWords.value.split('\n'),
 		hiddenTags: hiddenTags.value.split('\n'),
