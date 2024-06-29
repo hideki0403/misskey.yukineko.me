@@ -4,10 +4,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div :class="$style.root">
-	<span v-if="!afterOnly">{{ i18n.ts.scheduledNoteDelete }}</span>
+<div :class="[$style.root, { [$style.padding]: !afterOnly }]">
+	<div v-if="!afterOnly" :class="[$style.label, { [$style.withAccent]: !showDetail }]" @click="showDetail = !showDetail"><i class="ti" :class="showDetail ? 'ti-chevron-up' : 'ti-chevron-down'"></i> {{ summaryText }}</div>
 	<MkInfo v-if="!isValid" warn>{{ i18n.ts.cannotScheduleLaterThanOneYear }}</MkInfo>
-	<section>
+	<section v-if="afterOnly || showDetail">
 		<div>
 			<MkSelect v-if="!afterOnly" v-model="expiration" small>
 				<template #label>{{ i18n.ts._poll.expiration }}</template>
@@ -39,12 +39,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import MkInput from './MkInput.vue';
 import MkSelect from './MkSelect.vue';
 import MkInfo from './MkInfo.vue';
 import { formatDateTimeString } from '@/scripts/format-time-string.js';
 import { addTime } from '@/scripts/time.js';
+import { defaultStore } from '@/store.js';
 import { i18n } from '@/i18n.js';
 
 export type DeleteScheduleEditorModelValue = {
@@ -61,12 +62,53 @@ const emit = defineEmits<{
 	(ev: 'update:modelValue', v: DeleteScheduleEditorModelValue): void;
 }>();
 
-const expiration = ref<'at' | 'after'>(props.afterOnly ? 'after' : 'at');
+const expiration = ref<'at' | 'after'>('after');
 const atDate = ref(formatDateTimeString(addTime(new Date(), 1, 'day'), 'yyyy-MM-dd'));
 const atTime = ref('00:00');
 const after = ref(0);
-const unit = ref('second');
+const unit = ref<'second' | 'minute' | 'hour' | 'day'>('second');
 const isValid = ref(true);
+
+const showDetail = ref(!defaultStore.state.defaultScheduledNoteDelete);
+const summaryText = computed(() => {
+	if (showDetail.value) {
+		return i18n.ts.scheduledNoteDelete;
+	}
+
+	if (expiration.value === 'at') {
+		return `${i18n.ts.scheduledNoteDeleteEnabled} (${formatDateTimeString(new Date(calcAt()), 'yyyy/MM/dd HH:mm')})`;
+	} else {
+		const time = unit.value === 'second' ? i18n.tsx._timeIn.seconds({ n: (after.value).toString() })
+			: unit.value === 'minute' ? i18n.tsx._timeIn.minutes({ n: (after.value).toString() })
+			: unit.value === 'hour' ? i18n.tsx._timeIn.hours({ n: (after.value).toString() })
+			: i18n.tsx._timeIn.days({ n: (after.value).toString() });
+
+		return `${i18n.ts.scheduledNoteDeleteEnabled} (${time})`;
+	}
+});
+
+const beautifyAfter = (base: number) => {
+	let time = base;
+
+	if (time % 60 === 0) {
+		unit.value = 'minute';
+		time /= 60;
+	}
+
+	if (time % 60 === 0) {
+		unit.value = 'hour';
+		time /= 60;
+	}
+
+	if (time % 24 === 0) {
+		unit.value = 'day';
+		time /= 24;
+	}
+
+	after.value = time;
+};
+
+beautifyAfter(defaultStore.state.defaultScheduledNoteDeleteTime / 1000);
 
 if (props.modelValue.deleteAt) {
 	expiration.value = 'at';
@@ -75,7 +117,7 @@ if (props.modelValue.deleteAt) {
 	atTime.value = formatDateTimeString(deleteAt, 'HH:mm');
 } else if (typeof props.modelValue.deleteAfter === 'number') {
 	expiration.value = 'after';
-	after.value = props.modelValue.deleteAfter / 1000;
+	beautifyAfter(props.modelValue.deleteAfter / 1000);
 }
 
 const calcAt = () => {
@@ -127,8 +169,8 @@ watch([expiration, atDate, atTime, after, unit, isValid], () => {
 .root {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
-	padding: 8px 16px;
+	gap: 8px;
+	padding: 8px 0px;
 
 	>span {
 		opacity: 0.7;
@@ -159,7 +201,6 @@ watch([expiration, atDate, atTime, after, unit, isValid], () => {
 
 	>section {
 		>div {
-			margin: 0 8px;
 			display: flex;
 			flex-direction: row;
 			flex-wrap: wrap;
@@ -186,5 +227,23 @@ watch([expiration, atDate, atTime, after, unit, isValid], () => {
 			}
 		}
 	}
+}
+
+.padding {
+	padding: 8px 24px;
+}
+
+.label {
+	font-size: 0.85em;
+	padding: 0 0 8px 0;
+	user-select: none;
+}
+
+.withAccent {
+	color: var(--accent);
+}
+
+.chevronOpening {
+	transform: rotateX(180deg);
 }
 </style>
