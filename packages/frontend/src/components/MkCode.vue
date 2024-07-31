@@ -10,7 +10,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</button>
 	<Suspense>
 		<template #fallback>
-			<MkLoading />
+			<MkLoading/>
 		</template>
 		<XCode v-if="show && lang" :code="code" :lang="lang"/>
 		<pre v-else-if="show" :class="$style.codeBlockFallbackRoot"><code :class="$style.codeBlockFallbackCode">{{ code }}</code></pre>
@@ -30,7 +30,7 @@ import * as os from '@/os.js';
 import MkLoading from '@/components/global/MkLoading.vue';
 import { i18n } from '@/i18n.js';
 import { getDataSaverState } from '@/scripts/datasaver.js';
-import copyToClipboard from '@/scripts/copy-to-clipboard.js';
+import { copyToClipboard } from '@/scripts/copy-to-clipboard.js';
 
 const props = defineProps<{
 	code: string;
