@@ -53,9 +53,10 @@
 
 <script lang="ts" setup>
 import { defineAsyncComponent, provide, onMounted, computed, ref, ComputedRef, watch, shallowRef, Ref } from 'vue';
+import { instanceName } from '@@/js/config.js';
+import { CURRENT_STICKY_BOTTOM } from '@@/js/const.js';
 import XCommon from './_common_/common.vue';
 import type MkStickyContainer from '@/components/global/MkStickyContainer.vue';
-import { instanceName } from '@/config.js';
 import XDrawerMenu from '@/ui/_common_/navbar-for-mobile.vue';
 import MkPostForm from '@/components/MkPostForm.vue';
 import * as os from '@/os.js';
@@ -67,7 +68,6 @@ import { mainRouter } from '@/router/main.js';
 import { PageMetadata, provideMetadataReceiver, provideReactiveMetadata } from '@/scripts/page-metadata.js';
 import { deviceKind } from '@/scripts/device-kind.js';
 import { miLocalStorage } from '@/local-storage.js';
-import { CURRENT_STICKY_BOTTOM } from '@/const.js';
 import { useScrollPositionManager } from '@/nirax.js';
 import { zenStore } from '@/ui/universal-zen/zen-store.js';
 

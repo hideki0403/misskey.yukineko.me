@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <div class="_gaps_m">
 	<div :class="$style.banner" :style="{ backgroundImage: `url(${ instance.bannerUrl })` }">
 		<div style="overflow: clip;">
-			<img :src="instance.iconUrl ?? instance.faviconUrl ?? '/favicon.ico'" alt="" :class="$style.bannerIcon" @click="devFlag++"/>
+			<img :src="instance.iconUrl ?? '/favicon.ico'" alt="" :class="$style.bannerIcon" @click="devFlag++"/>
 			<div :class="$style.bannerName">
 				<b>{{ instance.name ?? host }}</b>
 			</div>
@@ -132,8 +132,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { ref } from 'vue';
+import { host, version } from '@@/js/config.js';
 import * as os from '@/os.js';
-import { host, version } from '@/config.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
 import { miLocalStorage } from '@/local-storage.js';

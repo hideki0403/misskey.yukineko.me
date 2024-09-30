@@ -49,8 +49,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<template #label>{{ i18n.ts.experimentalFeatures }}</template>
 
 				<div class="_gaps_m">
-					<MkSwitch v-model="enableCondensedLineForAcct">
-						<template #label>Enable condensed line for acct</template>
+					<MkSwitch v-model="enableCondensedLine">
+						<template #label>Enable condensed line</template>
 					</MkSwitch>
 				</div>
 			</MkFolder>
@@ -90,6 +90,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
+import { host } from '@@/js/config.js';
 import MkSwitch from '@/components/MkSwitch.vue';
 import FormLink from '@/components/form/link.vue';
 import MkFolder from '@/components/MkFolder.vue';
@@ -103,17 +104,15 @@ import { defaultStore } from '@/store.js';
 import { signout, signinRequired } from '@/account.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
-import { host } from '@/config.js';
 import { miLocalStorage } from '@/local-storage.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
-import { unisonReload } from '@/scripts/unison-reload.js';
 import { cacheClear } from '@/scripts/cache-clear.js';
 import FormSection from '@/components/form/section.vue';
 
 const $i = signinRequired();
 
 const reportError = computed(defaultStore.makeGetterSetter('optoutStatistics'));
-const enableCondensedLineForAcct = computed(defaultStore.makeGetterSetter('enableCondensedLineForAcct'));
+const enableCondensedLine = computed(defaultStore.makeGetterSetter('enableCondensedLine'));
 const devMode = computed(defaultStore.makeGetterSetter('devMode'));
 const defaultWithReplies = computed(defaultStore.makeGetterSetter('defaultWithReplies'));
 const showConnectionStatus = computed(defaultStore.makeGetterSetter('showConnectionStatus'));
@@ -149,16 +148,6 @@ async function deleteAccount() {
 	await signout();
 }
 
-async function reloadAsk() {
-	const { canceled } = await os.confirm({
-		type: 'info',
-		text: i18n.ts.reloadToApplySetting,
-	});
-	if (canceled) return;
-
-	unisonReload();
-}
-
 async function updateRepliesAll(withReplies: boolean) {
 	const { canceled } = await os.confirm({
 		type: 'warning',
@@ -168,12 +157,6 @@ async function updateRepliesAll(withReplies: boolean) {
 
 	misskeyApi('following/update-all', { withReplies });
 }
-
-watch([
-	enableCondensedLineForAcct,
-], async () => {
-	await reloadAsk();
-});
 
 const headerActions = computed(() => []);
 

@@ -92,6 +92,7 @@ import * as ep___admin_systemWebhook_delete from './endpoints/admin/system-webho
 import * as ep___admin_systemWebhook_list from './endpoints/admin/system-webhook/list.js';
 import * as ep___admin_systemWebhook_show from './endpoints/admin/system-webhook/show.js';
 import * as ep___admin_systemWebhook_update from './endpoints/admin/system-webhook/update.js';
+import * as ep___admin_systemWebhook_test from './endpoints/admin/system-webhook/test.js';
 import * as ep___announcements from './endpoints/announcements.js';
 import * as ep___announcements_show from './endpoints/announcements/show.js';
 import * as ep___antennas_create from './endpoints/antennas/create.js';
@@ -263,6 +264,7 @@ import * as ep___integrations_fanbox_connect from './endpoints/integrations/fanb
 import * as ep___integrations_fanbox_disconnect from './endpoints/integrations/fanbox/disconnect.js';
 import * as ep___integrations_fanbox_requestRefresh from './endpoints/integrations/fanbox/request-refresh.js';
 import * as ep___integrations_patreon_requestRefresh from './endpoints/integrations/patreon/request-refresh.js';
+import * as ep___i_webhooks_test from './endpoints/i/webhooks/test.js';
 import * as ep___invite_create from './endpoints/invite/create.js';
 import * as ep___invite_delete from './endpoints/invite/delete.js';
 import * as ep___invite_list from './endpoints/invite/list.js';
@@ -485,6 +487,7 @@ const $admin_systemWebhook_delete: Provider = { provide: 'ep:admin/system-webhoo
 const $admin_systemWebhook_list: Provider = { provide: 'ep:admin/system-webhook/list', useClass: ep___admin_systemWebhook_list.default };
 const $admin_systemWebhook_show: Provider = { provide: 'ep:admin/system-webhook/show', useClass: ep___admin_systemWebhook_show.default };
 const $admin_systemWebhook_update: Provider = { provide: 'ep:admin/system-webhook/update', useClass: ep___admin_systemWebhook_update.default };
+const $admin_systemWebhook_test: Provider = { provide: 'ep:admin/system-webhook/test', useClass: ep___admin_systemWebhook_test.default };
 const $announcements: Provider = { provide: 'ep:announcements', useClass: ep___announcements.default };
 const $announcements_show: Provider = { provide: 'ep:announcements/show', useClass: ep___announcements_show.default };
 const $antennas_create: Provider = { provide: 'ep:antennas/create', useClass: ep___antennas_create.default };
@@ -656,6 +659,7 @@ const $integrations_fanbox_connect: Provider = { provide: 'ep:integrations/fanbo
 const $integrations_fanbox_disconnect: Provider = { provide: 'ep:integrations/fanbox/disconnect', useClass: ep___integrations_fanbox_disconnect.default };
 const $integrations_fanbox_requestRefresh: Provider = { provide: 'ep:integrations/fanbox/request-refresh', useClass: ep___integrations_fanbox_requestRefresh.default };
 const $integrations_patreon_requestRefresh: Provider = { provide: 'ep:integrations/patreon/request-refresh', useClass: ep___integrations_patreon_requestRefresh.default };
+const $i_webhooks_test: Provider = { provide: 'ep:i/webhooks/test', useClass: ep___i_webhooks_test.default };
 const $invite_create: Provider = { provide: 'ep:invite/create', useClass: ep___invite_create.default };
 const $invite_delete: Provider = { provide: 'ep:invite/delete', useClass: ep___invite_delete.default };
 const $invite_list: Provider = { provide: 'ep:invite/list', useClass: ep___invite_list.default };
@@ -882,6 +886,7 @@ const $reversi_verify: Provider = { provide: 'ep:reversi/verify', useClass: ep__
 		$admin_systemWebhook_list,
 		$admin_systemWebhook_show,
 		$admin_systemWebhook_update,
+		$admin_systemWebhook_test,
 		$announcements,
 		$announcements_show,
 		$antennas_create,
@@ -1053,6 +1058,7 @@ const $reversi_verify: Provider = { provide: 'ep:reversi/verify', useClass: ep__
 		$integrations_fanbox_disconnect,
 		$integrations_fanbox_requestRefresh,
 		$integrations_patreon_requestRefresh,
+		$i_webhooks_test,
 		$invite_create,
 		$invite_delete,
 		$invite_list,
@@ -1273,6 +1279,7 @@ const $reversi_verify: Provider = { provide: 'ep:reversi/verify', useClass: ep__
 		$admin_systemWebhook_list,
 		$admin_systemWebhook_show,
 		$admin_systemWebhook_update,
+		$admin_systemWebhook_test,
 		$announcements,
 		$announcements_show,
 		$antennas_create,
@@ -1444,6 +1451,7 @@ const $reversi_verify: Provider = { provide: 'ep:reversi/verify', useClass: ep__
 		$integrations_fanbox_disconnect,
 		$integrations_fanbox_requestRefresh,
 		$integrations_patreon_requestRefresh,
+		$i_webhooks_test,
 		$invite_create,
 		$invite_delete,
 		$invite_list,

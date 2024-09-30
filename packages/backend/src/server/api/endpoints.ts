@@ -98,6 +98,7 @@ import * as ep___admin_systemWebhook_delete from './endpoints/admin/system-webho
 import * as ep___admin_systemWebhook_list from './endpoints/admin/system-webhook/list.js';
 import * as ep___admin_systemWebhook_show from './endpoints/admin/system-webhook/show.js';
 import * as ep___admin_systemWebhook_update from './endpoints/admin/system-webhook/update.js';
+import * as ep___admin_systemWebhook_test from './endpoints/admin/system-webhook/test.js';
 import * as ep___announcements from './endpoints/announcements.js';
 import * as ep___announcements_show from './endpoints/announcements/show.js';
 import * as ep___antennas_create from './endpoints/antennas/create.js';
@@ -269,6 +270,7 @@ import * as ep___integrations_fanbox_connect from './endpoints/integrations/fanb
 import * as ep___integrations_fanbox_disconnect from './endpoints/integrations/fanbox/disconnect.js';
 import * as ep___integrations_fanbox_requestRefresh from './endpoints/integrations/fanbox/request-refresh.js';
 import * as ep___integrations_patreon_requestRefresh from './endpoints/integrations/patreon/request-refresh.js';
+import * as ep___i_webhooks_test from './endpoints/i/webhooks/test.js';
 import * as ep___invite_create from './endpoints/invite/create.js';
 import * as ep___invite_delete from './endpoints/invite/delete.js';
 import * as ep___invite_list from './endpoints/invite/list.js';
@@ -489,6 +491,7 @@ const eps = [
 	['admin/system-webhook/list', ep___admin_systemWebhook_list],
 	['admin/system-webhook/show', ep___admin_systemWebhook_show],
 	['admin/system-webhook/update', ep___admin_systemWebhook_update],
+	['admin/system-webhook/test', ep___admin_systemWebhook_test],
 	['announcements', ep___announcements],
 	['announcements/show', ep___announcements_show],
 	['antennas/create', ep___antennas_create],
@@ -660,6 +663,7 @@ const eps = [
 	['integrations/fanbox/disconnect', ep___integrations_fanbox_disconnect],
 	['integrations/fanbox/request-refresh', ep___integrations_fanbox_requestRefresh],
 	['integrations/patreon/request-refresh', ep___integrations_patreon_requestRefresh],
+	['i/webhooks/test', ep___i_webhooks_test],
 	['invite/create', ep___invite_create],
 	['invite/delete', ep___invite_delete],
 	['invite/list', ep___invite_list],

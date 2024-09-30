@@ -676,6 +676,11 @@ export class MiMeta {
 	})
 	public perUserListTimelineCacheMax: number;
 
+	@Column('boolean', {
+		default: false,
+	})
+	public enableReactionsBuffering: boolean;
+
 	@Column('integer', {
 		default: 0,
 	})
@@ -737,4 +742,17 @@ export class MiMeta {
 		nullable: true,
 	})
 	public urlPreviewUserAgent: string | null;
+
+	@Column('varchar', {
+		length: 128,
+		default: 'all',
+	})
+	public federation: 'all' | 'specified' | 'none';
+
+	@Column('varchar', {
+		length: 1024,
+		array: true,
+		default: '{}',
+	})
+	public federationHosts: string[];
 }

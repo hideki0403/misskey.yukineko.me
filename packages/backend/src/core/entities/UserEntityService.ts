@@ -534,7 +534,7 @@ export class UserEntityService implements OnModuleInit {
 					name: r.name,
 					iconUrl: r.iconUrl,
 					displayOrder: r.displayOrder,
-				}))
+				})),
 			) : undefined,
 
 			...(isDetailed ? {
@@ -594,6 +594,7 @@ export class UserEntityService implements OnModuleInit {
 			...(isDetailed && isMe ? {
 				avatarId: user.avatarId,
 				bannerId: user.bannerId,
+				followedMessage: profile!.followedMessage,
 				isModerator: isModerator,
 				isAdmin: isAdmin,
 				injectFeaturedNote: profile!.injectFeaturedNote,
@@ -670,6 +671,7 @@ export class UserEntityService implements OnModuleInit {
 				//純正通知: https://github.com/misskey-dev/misskey/commit/e3f151e2307e4c0d7b9cdfc7deba2ff028adce03
 				notify: relation.isNoteSubscribing ? 'normal' : 'none',
 				withReplies: relation.following?.withReplies ?? false,
+				followedMessage: relation.isFollowing ? profile!.followedMessage : undefined,
 			} : {}),
 		} as Promiseable<Packed<S>>;
 
