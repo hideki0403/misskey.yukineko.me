@@ -44,9 +44,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { onBeforeUnmount, onMounted, provide, watch, shallowRef, ref, computed } from 'vue';
 import { updateColumn, swapLeftColumn, swapRightColumn, swapUpColumn, swapDownColumn, stackLeftColumn, popRightColumn, removeColumn, swapColumn, Column } from './deck-store.js';
+import type { MenuItem } from '@/types/menu.js';
+import type { Filter as NoteFilter } from '@/components/MkNotes.vue';
 import * as os from '@/os.js';
 import { i18n } from '@/i18n.js';
-import { MenuItem } from '@/types/menu.js';
 
 provide('shouldHeaderThin', true);
 provide('shouldOmitHeaderTitle', true);
@@ -105,7 +106,98 @@ function toggleActive() {
 }
 
 function getMenu() {
-	let items: MenuItem[] = [{
+	const menuItems: MenuItem[] = [];
+
+	if (props.menu) {
+		menuItems.push(...props.menu, {
+			type: 'divider',
+		});
+	}
+
+	if (props.refresher) {
+		menuItems.push({
+			icon: 'ti ti-refresh',
+			text: i18n.ts.reload,
+			action: () => {
+				if (props.refresher) {
+					props.refresher();
+				}
+			},
+		});
+	}
+
+	if (props.enableFilter || props.menu) {
+		menuItems.push({ type: 'divider' });
+	}
+
+	if (props.enableFilter) {
+		menuItems.push({
+			icon: 'ti ti-filter',
+			text: i18n.ts.filter,
+			action: async () => {
+				const { canceled, result } = await os.form(props.column.name ?? '', {
+					includeKeywords: {
+						type: 'string',
+						label: i18n.ts._filter.includeKeywords,
+						default: props.column.filter?.includeKeywords?.join(' ') ?? null,
+						description: i18n.ts._filter.splitDescription,
+					},
+					includeKeywordsAll: {
+						type: 'string',
+						label: i18n.ts._filter.includeKeywordsAll,
+						default: props.column.filter?.includeKeywordsAll?.join(' ') ?? null,
+						description: i18n.ts._filter.splitDescription,
+					},
+					excludeKeywords: {
+						type: 'string',
+						label: i18n.ts._filter.excludeKeywords,
+						default: props.column.filter?.excludeKeywords?.join(' ') ?? null,
+						description: i18n.ts._filter.splitDescription,
+					},
+					includeInstances: {
+						type: 'string',
+						label: i18n.ts._filter.includeInstances,
+						default: props.column.filter?.includeInstances?.join(' ') ?? null,
+						description: i18n.ts._filter.splitDescription,
+					},
+					excludeInstances: {
+						type: 'string',
+						label: i18n.ts._filter.excludeInstances,
+						default: props.column.filter?.excludeInstances?.join(' ') ?? null,
+						description: i18n.ts._filter.splitDescription,
+					},
+					excludeRenotes: {
+						type: 'boolean',
+						label: i18n.ts._filter.excludeRenotes,
+						default: props.column.filter?.excludeRenotes ?? null,
+					},
+					excludeReplies: {
+						type: 'boolean',
+						label: i18n.ts._filter.excludeReplies,
+						default: props.column.filter?.excludeReplies ?? null,
+					},
+					mediaOnly: {
+						type: 'boolean',
+						label: i18n.ts._filter.mediaOnly,
+						default: props.column.filter?.mediaOnly ?? null,
+					},
+				});
+				if (canceled) return;
+
+				for (const k in result) {
+					if (result[k] === null) result[k] = undefined;
+					if (['includeKeywords', 'includeKeywordsAll', 'excludeKeywords', 'includeInstances', 'excludeInstances'].includes(k)) {
+						result[k] = result[k]?.split(' ').filter(x => x);
+						if (result[k] && !result[k].length) result[k] = undefined;
+					}
+				}
+
+				updateColumn(props.column.id, { filter: result as unknown as NoteFilter });
+			},
+		});
+	}
+
+	menuItems.push({
 		icon: 'ti ti-settings',
 		text: i18n.ts._deck.configureColumn,
 		action: async () => {
@@ -130,144 +222,73 @@ function getMenu() {
 			if (canceled) return;
 			updateColumn(props.column.id, result);
 		},
+	});
+
+	const moveToMenuItems: MenuItem[] = [];
+
+	moveToMenuItems.push({
+		icon: 'ti ti-arrow-left',
+		text: i18n.ts._deck.swapLeft,
+		action: () => {
+			swapLeftColumn(props.column.id);
+		},
 	}, {
-		type: 'parent',
-		text: i18n.ts.move + '...',
-		icon: 'ti ti-arrows-move',
-		children: [{
-			icon: 'ti ti-arrow-left',
-			text: i18n.ts._deck.swapLeft,
-			action: () => {
-				swapLeftColumn(props.column.id);
-			},
-		}, {
-			icon: 'ti ti-arrow-right',
-			text: i18n.ts._deck.swapRight,
-			action: () => {
-				swapRightColumn(props.column.id);
-			},
-		}, props.isStacked ? {
+		icon: 'ti ti-arrow-right',
+		text: i18n.ts._deck.swapRight,
+		action: () => {
+			swapRightColumn(props.column.id);
+		},
+	});
+
+	if (props.isStacked) {
+		moveToMenuItems.push({
 			icon: 'ti ti-arrow-up',
 			text: i18n.ts._deck.swapUp,
 			action: () => {
 				swapUpColumn(props.column.id);
 			},
-		} : undefined, props.isStacked ? {
+		}, {
 			icon: 'ti ti-arrow-down',
 			text: i18n.ts._deck.swapDown,
 			action: () => {
 				swapDownColumn(props.column.id);
 			},
-		} : undefined],
+		});
+	}
+
+	menuItems.push({
+		type: 'parent',
+		text: i18n.ts.move + '...',
+		icon: 'ti ti-arrows-move',
+		children: moveToMenuItems,
 	}, {
 		icon: 'ti ti-stack-2',
 		text: i18n.ts._deck.stackLeft,
 		action: () => {
 			stackLeftColumn(props.column.id);
 		},
-	}, props.isStacked ? {
-		icon: 'ti ti-window-maximize',
-		text: i18n.ts._deck.popRight,
-		action: () => {
-			popRightColumn(props.column.id);
-		},
-	} : undefined, { type: 'divider' }, {
+	});
+
+	if (props.isStacked) {
+		menuItems.push({
+			icon: 'ti ti-window-maximize',
+			text: i18n.ts._deck.popRight,
+			action: () => {
+				popRightColumn(props.column.id);
+			},
+		});
+	}
+
+	menuItems.push({ type: 'divider' }, {
 		icon: 'ti ti-trash',
 		text: i18n.ts.remove,
 		danger: true,
 		action: () => {
 			removeColumn(props.column.id);
 		},
-	}];
+	});
 
-	if (props.enableFilter || props.menu) {
-		items.unshift({ type: 'divider' });
-	}
-
-	if (props.enableFilter) {
-		items.unshift({
-			icon: 'ti ti-filter',
-			text: i18n.ts.filter,
-			action: async () => {
-				const { canceled, result } = await os.form(props.column.name, {
-					includeKeywords: {
-						type: 'string',
-						label: i18n.ts._filter.includeKeywords,
-						default: props.column.filter?.includeKeywords?.join(' '),
-						description: i18n.ts._filter.splitDescription,
-					},
-					includeKeywordsAll: {
-						type: 'string',
-						label: i18n.ts._filter.includeKeywordsAll,
-						default: props.column.filter?.includeKeywordsAll?.join(' '),
-						description: i18n.ts._filter.splitDescription,
-					},
-					excludeKeywords: {
-						type: 'string',
-						label: i18n.ts._filter.excludeKeywords,
-						default: props.column.filter?.excludeKeywords?.join(' '),
-						description: i18n.ts._filter.splitDescription,
-					},
-					includeInstances: {
-						type: 'string',
-						label: i18n.ts._filter.includeInstances,
-						default: props.column.filter?.includeInstances?.join(' '),
-						description: i18n.ts._filter.splitDescription,
-					},
-					excludeInstances: {
-						type: 'string',
-						label: i18n.ts._filter.excludeInstances,
-						default: props.column.filter?.excludeInstances?.join(' '),
-						description: i18n.ts._filter.splitDescription,
-					},
-					excludeRenotes: {
-						type: 'boolean',
-						label: i18n.ts._filter.excludeRenotes,
-						default: props.column.filter?.excludeRenotes,
-					},
-					excludeReplies: {
-						type: 'boolean',
-						label: i18n.ts._filter.excludeReplies,
-						default: props.column.filter?.excludeReplies,
-					},
-					mediaOnly: {
-						type: 'boolean',
-						label: i18n.ts._filter.mediaOnly,
-						default: props.column.filter?.mediaOnly,
-					},
-				});
-				if (canceled) return;
-
-				for (const k in result) {
-					if (result[k] === null) result[k] = undefined;
-					if (['includeKeywords', 'includeKeywordsAll', 'excludeKeywords', 'includeInstances', 'excludeInstances'].includes(k)) {
-						result[k] = result[k]?.split(' ').filter(x => x);
-						if (result[k] && !result[k].length) result[k] = undefined;
-					}
-				}
-
-				updateColumn(props.column.id, { filter: result });
-			},
-		});
-	}
-
-	if (props.menu) {
-		items = props.menu.concat(items);
-	}
-
-	if (props.refresher) {
-		items = [{
-			icon: 'ti ti-refresh',
-			text: i18n.ts.reload,
-			action: () => {
-				if (props.refresher) {
-					props.refresher();
-				}
-			},
-		}, ...items];
-	}
-
-	return items;
+	return menuItems;
 }
 
 function showSettingsMenu(ev: MouseEvent) {
@@ -395,11 +416,11 @@ function onDrop(ev) {
 
 		> .body {
 			background: transparent !important;
+			scrollbar-color: var(--scrollbarHandle) transparent;
 
 			&::-webkit-scrollbar-track {
 				background: transparent;
 			}
-			scrollbar-color: var(--scrollbarHandle) transparent;
 		}
 	}
 
@@ -409,11 +430,11 @@ function onDrop(ev) {
 		> .body {
 			background: var(--bg) !important;
 			overflow-y: scroll !important;
+			scrollbar-color: var(--scrollbarHandle) transparent;
 
 			&::-webkit-scrollbar-track {
 				background: inherit;
 			}
-			scrollbar-color: var(--scrollbarHandle) transparent;
 		}
 	}
 }
@@ -494,10 +515,10 @@ function onDrop(ev) {
 	box-sizing: border-box;
 	container-type: size;
 	background-color: var(--bg);
+	scrollbar-color: var(--scrollbarHandle) var(--panel);
 
 	&::-webkit-scrollbar-track {
 		background: var(--panel);
 	}
-	scrollbar-color: var(--scrollbarHandle) var(--panel);
 }
 </style>

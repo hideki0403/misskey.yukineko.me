@@ -31,7 +31,7 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue';
-import { apiUrl } from '@/config.js';
+import { apiUrl } from '@@/js/config.js';
 import * as os from '@/os.js';
 import FormSection from '@/components/form/section.vue';
 import MkButton from '@/components/MkButton.vue';
