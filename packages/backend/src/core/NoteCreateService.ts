@@ -227,7 +227,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		private loggerService: LoggerService,
 	) {
 		this.logger = this.loggerService.getLogger('note-create-service');
-		this.updateNotesCountQueue = new CollapsedQueue(60 * 1000 * 5, this.collapseNotesCount, this.performUpdateNotesCount);
+		this.updateNotesCountQueue = new CollapsedQueue(process.env.NODE_ENV !== 'test' ? 60 * 1000 * 5 : 0, this.collapseNotesCount, this.performUpdateNotesCount);
 	}
 
 	@bindThis

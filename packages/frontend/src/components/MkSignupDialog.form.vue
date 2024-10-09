@@ -84,10 +84,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { ref, computed } from 'vue';
 import { toUnicode } from 'punycode/';
 import * as Misskey from 'misskey-js';
+import * as config from '@@/js/config.js';
 import MkButton from './MkButton.vue';
 import MkInput from './MkInput.vue';
 import MkCaptcha, { type Captcha } from '@/components/MkCaptcha.vue';
-import * as config from '@@/js/config.js';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import { login } from '@/account.js';
@@ -102,7 +102,7 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{
-	(ev: 'signup', user: Misskey.entities.SigninResponse): void;
+	(ev: 'signup', user: Misskey.entities.SigninFlowResponse): void;
 	(ev: 'signupEmailPending'): void;
 	(ev: 'back'): void;
 }>();
@@ -111,6 +111,7 @@ const host = toUnicode(config.host);
 const useInviteCode = instance.disableRegistration || (instance.enableRegistrationLimit && !props.withoutInviteCode);
 
 const hcaptcha = ref<Captcha | undefined>();
+const mcaptcha = ref<Captcha | undefined>();
 const recaptcha = ref<Captcha | undefined>();
 const turnstile = ref<Captcha | undefined>();
 
@@ -274,19 +275,25 @@ async function onSubmit(): Promise<void> {
 			});
 			emit('signupEmailPending');
 		} else {
-			const res = await misskeyApi('signin', {
+			const res = await misskeyApi('signin-flow', {
 				username: username.value,
 				password: password.value,
 			});
 			emit('signup', res);
 
-			if (props.autoSet) {
+			if (props.autoSet && res.finished) {
 				return login(res.i);
+			} else {
+				os.alert({
+					type: 'error',
+					text: i18n.ts.somethingHappened,
+				});
 			}
 		}
 	} catch {
 		submitting.value = false;
 		hcaptcha.value?.reset?.();
+		mcaptcha.value?.reset?.();
 		recaptcha.value?.reset?.();
 		turnstile.value?.reset?.();
 
