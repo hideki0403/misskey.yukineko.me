@@ -78,27 +78,25 @@ export function getConfig(): UserConfig {
 			pluginVue(),
 			pluginJson5(),
 			process.env.ENABLE_SENTRY ? null : pluginUnwindCssModuleClassName(),
-			...process.env.NODE_ENV === 'production'
-				? [
-					process.env.ENABLE_SENTRY ? viteSentry({
-						url: process.env.SENTRY_URL,
-						org: process.env.SENTRY_ORG,
-						project: process.env.SENTRY_PROJECT,
-						authToken: process.env.SENTRY_AUTH_TOKEN,
-						release: meta.version,
-						sourceMaps: {
-							urlPrefix: '~/vite',
-							include: ['../../built/_vite_'],
-						},
-					}) : null,
-					pluginReplace({
-						preventAssignment: true,
-						values: {
-							'isChromatic()': JSON.stringify(false),
-						},
-					}),
-				]
-				: [],
+			...(process.env.NODE_ENV === 'production' ? [
+				process.env.ENABLE_SENTRY ? viteSentry({
+					url: process.env.SENTRY_URL,
+					org: process.env.SENTRY_ORG,
+					project: process.env.SENTRY_PROJECT,
+					authToken: process.env.SENTRY_AUTH_TOKEN,
+					release: meta.version,
+					sourceMaps: {
+						urlPrefix: '~/vite',
+						include: ['../../built/_vite_'],
+					},
+				}) : null,
+				pluginReplace({
+					preventAssignment: true,
+					values: {
+						'isChromatic()': JSON.stringify(false),
+					},
+				}),
+			] : []),
 		],
 
 		resolve: {
@@ -122,6 +120,11 @@ export function getConfig(): UserConfig {
 					} else {
 						return id;
 					}
+				},
+			},
+			preprocessorOptions: {
+				scss: {
+					api: 'modern-compiler',
 				},
 			},
 		},
