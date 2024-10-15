@@ -215,11 +215,11 @@ if (!mock) {
 
 	&.canToggleFallback:not(.canToggle):not(.reacted) {
 		box-sizing: border-box;
-		border: 2px dashed var(--switchBg);
+		border: 2px dashed var(--MI_THEME-switchBg);
 
 		&.small {
 			border-width: 1px;
-			border-color: var(--buttonBgSub);
+			border-color: var(--MI_THEME-buttonBgSub);
 		}
 
 		&:hover {
