@@ -109,10 +109,10 @@ onMounted(async () => {
 	padding: 10px;
 	gap: 6px;
 	flex-grow: 1;
-	background-color: var(--buttonBg);
+	background-color: var(--MI_THEME-buttonBg);
 
 	&:hover:not([aria-disabled="true"]) {
-		background-color: var(--buttonHoverBg);
+		background-color: var(--MI_THEME-buttonHoverBg);
 	}
 
 	&[aria-disabled="true"] {
@@ -145,11 +145,11 @@ onMounted(async () => {
 	align-items: center;
 	justify-content: center;
 	padding: 16px;
-	background-color: var(--buttonBg);
-	color: var(--error);
+	background-color: var(--MI_THEME-buttonBg);
+	color: var(--MI_THEME-error);
 
 	&:hover {
-		background-color: var(--error);
+		background-color: var(--MI_THEME-error);
 		color: white;
 	}
 }

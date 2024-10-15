@@ -162,7 +162,7 @@ definePageMetadata(() => ({
 	border-radius: 6px;
 
 	&:hover {
-		background: var(--X5);
+		background: var(--MI_THEME-X5);
 	}
 }
 

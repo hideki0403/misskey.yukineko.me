@@ -10,11 +10,24 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<MkSpacer :marginMin="20" :marginMax="28">
 		<div class="_gaps_m" :class="$style.root">
-			<MkInfo info>{{ i18n.tsx.registrationLimitDetails({ limit: instance.registrationLimitCooldown, count: instance.registrationLimit }) }}</MkInfo>
+			<MkInfo info>
+				{{ i18n.tsx.registrationLimitDetails({ limit: instance.registrationLimitCooldown, count:
+					instance.registrationLimit }) }}
+			</MkInfo>
 			<div>{{ i18n.ts.doYouHaveInviteCode }}</div>
 			<div class="_buttonsCenter">
-				<MkButton :class="$style.choiceButton" inline large style="color: var(--success);" @click="doneWithCode"><i class="ti ti-circle-check-filled"></i> {{ i18n.ts.hasInviteCode }}</MkButton>
-				<MkButton :class="$style.choiceButton" inline large style="color: var(--error);" @click="doneWithoutCode"><i class="ti ti-circle-x-filled"></i> {{ i18n.ts.doesNotHaveInviteCode }}</MkButton>
+				<MkButton
+					:class="$style.choiceButton" inline large style="color: var(--MI_THEME-success);"
+					@click="doneWithCode"
+				>
+					<i class="ti ti-circle-check-filled"></i> {{ i18n.ts.hasInviteCode }}
+				</MkButton>
+				<MkButton
+					:class="$style.choiceButton" inline large style="color: var(--MI_THEME-error);"
+					@click="doneWithoutCode"
+				>
+					<i class="ti ti-circle-x-filled"></i> {{ i18n.ts.doesNotHaveInviteCode }}
+				</MkButton>
 			</div>
 			<MkButton inline rounded @click="emit('cancel')">{{ i18n.ts.cancel }}</MkButton>
 		</div>
@@ -66,8 +79,8 @@ async function doneWithoutCode() {
 	padding: 16px;
 	text-align: center;
 	font-size: 26px;
-	background-color: var(--accentedBg);
-	color: var(--accent);
+	background-color: var(--MI_THEME-accentedBg);
+	color: var(--MI_THEME-accent);
 }
 
 .rules {
@@ -92,8 +105,8 @@ async function doneWithoutCode() {
 		width: 32px;
 		height: 32px;
 		line-height: 32px;
-		background-color: var(--accentedBg);
-		color: var(--accent);
+		background-color: var(--MI_THEME-accentedBg);
+		color: var(--MI_THEME-accent);
 		font-size: 13px;
 		font-weight: bold;
 		align-items: center;
@@ -104,4 +117,5 @@ async function doneWithoutCode() {
 
 .ruleText {
 	padding-top: 6px;
-}</style>
+}
+</style>

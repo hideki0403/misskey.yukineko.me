@@ -206,7 +206,7 @@ if (!mock) {
 	justify-content: center;
 
 	&.canToggle {
-		background: var(--buttonBg);
+		background: var(--MI_THEME-buttonBg);
 
 		&:hover {
 			background: rgba(0, 0, 0, 0.1);
@@ -215,11 +215,11 @@ if (!mock) {
 
 	&.canToggleFallback:not(.canToggle):not(.reacted) {
 		box-sizing: border-box;
-		border: 2px dashed var(--switchBg);
+		border: 2px dashed var(--MI_THEME-switchBg);
 
 		&.small {
 			border-width: 1px;
-			border-color: var(--buttonBgSub);
+			border-color: var(--MI_THEME-buttonBgSub);
 		}
 
 		&:hover {
@@ -254,12 +254,12 @@ if (!mock) {
 	}
 
 	&.reacted, &.reacted:hover {
-		background: var(--accentedBg);
-		color: var(--accent);
-		box-shadow: 0 0 0 1px var(--accent) inset;
+		background: var(--MI_THEME-accentedBg);
+		color: var(--MI_THEME-accent);
+		box-shadow: 0 0 0 1px var(--MI_THEME-accent) inset;
 
 		> .count {
-			color: var(--accent);
+			color: var(--MI_THEME-accent);
 		}
 
 		> .icon {

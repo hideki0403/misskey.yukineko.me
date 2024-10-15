@@ -63,7 +63,7 @@ const popularUsers: Paging = {
 .users {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-	grid-gap: var(--margin);
+	grid-gap: var(--MI-margin);
 	justify-content: center;
 }
 </style>

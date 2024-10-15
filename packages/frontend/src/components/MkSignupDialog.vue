@@ -52,7 +52,7 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{
-	(ev: 'done', res: Misskey.entities.SigninFlowResponse): void;
+	(ev: 'done', res: Misskey.entities.SignupResponse): void;
 	(ev: 'closed'): void;
 }>();
 
@@ -75,7 +75,7 @@ function onBack() {
 	}
 }
 
-function onSignup(res: Misskey.entities.SigninFlowResponse) {
+function onSignup(res: Misskey.entities.SignupResponse) {
 	emit('done', res);
 	dialog.value?.close();
 }

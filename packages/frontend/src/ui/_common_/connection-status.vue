@@ -60,7 +60,7 @@ onUnmounted(() => {
 	display: flex;
 	gap: 4px;
 	z-index: v-bind(zIndex);
-	bottom: calc(var(--minBottomSpacing) + var(--margin));
+	bottom: calc(var(--MI_THEME-minBottomSpacing) + var(--margin));
 	right: var(--margin);
 	margin: 0;
 	padding: 6px 8px;
@@ -75,11 +75,11 @@ onUnmounted(() => {
 }
 
 .online {
-	color: var(--accent);
+	color: var(--MI_THEME-accent);
 }
 
 .offline {
-	color: var(--fg);
+	color: var(--MI_THEME-fg);
 }
 
 .icon {

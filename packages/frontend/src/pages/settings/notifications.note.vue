@@ -1,34 +1,34 @@
 <template>
-	<div class="_gaps_m">
-		<MkPagination :pagination="noteNotificationPagination">
-			<template #empty>
-				<div class="_fullinfo">
-					<img src="/static-assets/aira/info.png" class="_ghost"/>
-					<div>{{ i18n.ts.noUsers }}</div>
-				</div>
-			</template>
+<div class="_gaps_m">
+	<MkPagination :pagination="noteNotificationPagination">
+		<template #empty>
+			<div class="_fullinfo">
+				<img src="/static-assets/aira/info.png" class="_ghost"/>
+				<div>{{ i18n.ts.noUsers }}</div>
+			</div>
+		</template>
 
-			<template #default="{ items }">
-				<div class="_gaps_s">
-					<div v-for="item in items" :key="item.id" :class="[$style.userItem, { [$style.userItemOpend]: expandedNoteNotificationItems.includes(item.id) }]">
-						<div :class="$style.userItemMain">
-							<MkA :class="$style.userItemMainBody" :to="userPage(item.user)">
-								<MkUserCardMini :user="item.user"/>
-							</MkA>
-							<button class="_button" :class="$style.userToggle" @click="toggleNoteNotificationItem(item)"><i :class="$style.chevron" class="ti ti-chevron-down"></i></button>
-							<button class="_button" :class="$style.remove" @click="noteUnsubscribe(item.userId, $event)"><i class="ti ti-x"></i></button>
-						</div>
-						<div v-if="expandedNoteNotificationItems.includes(item.id)" :class="$style.userItemSub">
-							<div>
-								Created at:
-								<MkTime :time="item.createdAt" mode="detail"/>
-							</div>
+		<template #default="{ items }">
+			<div class="_gaps_s">
+				<div v-for="item in items" :key="item.id" :class="[$style.userItem, { [$style.userItemOpend]: expandedNoteNotificationItems.includes(item.id) }]">
+					<div :class="$style.userItemMain">
+						<MkA :class="$style.userItemMainBody" :to="userPage(item.user)">
+							<MkUserCardMini :user="item.user"/>
+						</MkA>
+						<button class="_button" :class="$style.userToggle" @click="toggleNoteNotificationItem(item)"><i :class="$style.chevron" class="ti ti-chevron-down"></i></button>
+						<button class="_button" :class="$style.remove" @click="noteUnsubscribe(item.userId, $event)"><i class="ti ti-x"></i></button>
+					</div>
+					<div v-if="expandedNoteNotificationItems.includes(item.id)" :class="$style.userItemSub">
+						<div>
+							Created at:
+							<MkTime :time="item.createdAt" mode="detail"/>
 						</div>
 					</div>
 				</div>
-			</template>
-		</MkPagination>
-	</div>
+			</div>
+		</template>
+	</MkPagination>
+</div>
 </template>
 
 <script lang="ts" setup>
@@ -83,7 +83,7 @@ definePageMetadata({
 .userItemSub {
 	padding: 6px 12px;
 	font-size: 85%;
-	color: var(--fgTransparentWeak);
+	color: var(--MI_THEME-fgTransparentWeak);
 }
 
 .userItemMainBody {
@@ -112,4 +112,5 @@ definePageMetadata({
 	.chevron {
 		transform: rotateX(180deg);
 	}
-}</style>
+}
+</style>

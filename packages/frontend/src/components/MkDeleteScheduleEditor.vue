@@ -240,7 +240,7 @@ watch([expiration, atDate, atTime, after, unit, isValid], () => {
 }
 
 .withAccent {
-	color: var(--accent);
+	color: var(--MI_THEME-accent);
 }
 
 .chevronOpening {

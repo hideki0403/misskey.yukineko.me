@@ -12,6 +12,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<div class="_gaps_m">
 					<MkSwitch v-model="enableRegistration" @change="onChange_enableRegistration">
 						<template #label>{{ i18n.ts.enableRegistration }}</template>
+						<template #caption>{{ i18n.ts._serverSettings.thisSettingWillAutomaticallyOffWhenModeratorsInactive }}</template>
 					</MkSwitch>
 
 					<MkSwitch v-model="emailRequiredForSignup" @change="onChange_emailRequiredForSignup">
@@ -107,6 +108,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkFolder>
 
 					<MkFolder>
+						<template #icon><i class="ti ti-user-x"></i></template>
+						<template #label>{{ i18n.ts.prohibitedWordsForNameOfUser }}</template>
+
+						<div class="_gaps">
+							<MkTextarea v-model="prohibitedWordsForNameOfUser">
+								<template #caption>{{ i18n.ts.prohibitedWordsForNameOfUserDescription }}<br>{{ i18n.ts.prohibitedWordsDescription2 }}</template>
+							</MkTextarea>
+							<MkButton primary @click="save_prohibitedWordsForNameOfUser">{{ i18n.ts.save }}</MkButton>
+						</div>
+					</MkFolder>
+
+					<MkFolder>
 						<template #icon><i class="ti ti-eye-off"></i></template>
 						<template #label>{{ i18n.ts.hiddenTags }}</template>
 
@@ -188,6 +201,7 @@ const ageRestrictionThreshold = ref(0);
 const sensitiveWords = ref('');
 const preservedUsernames = ref('');
 const prohibitedWords = ref('');
+const prohibitedWordsForNameOfUser = ref<string>('');
 const hiddenTags = ref('');
 const tosUrl = ref<string | null>(null);
 const privacyPolicyUrl = ref<string | null>(null);
@@ -210,6 +224,7 @@ async function init() {
 	ageRestrictionThreshold.value = meta.ageRestrictionThreshold;
 	sensitiveWords.value = meta.sensitiveWords.join('\n');
 	prohibitedWords.value = meta.prohibitedWords.join('\n');
+	prohibitedWordsForNameOfUser.value = meta.prohibitedWordsForNameOfUser.join('\n');
 	hiddenTags.value = meta.hiddenTags.join('\n');
 	preservedUsernames.value = meta.preservedUsernames.join('\n');
 	tosUrl.value = meta.tosUrl;
@@ -297,6 +312,14 @@ function save_sensitiveWords() {
 function save_prohibitedWords() {
 	os.apiWithDialog('admin/update-meta', {
 		prohibitedWords: prohibitedWords.value.split('\n'),
+	}).then(() => {
+		fetchInstance(true);
+	});
+}
+
+function save_prohibitedWordsForNameOfUser() {
+	os.apiWithDialog('admin/update-meta', {
+		prohibitedWordsForNameOfUser: prohibitedWordsForNameOfUser.value.split('\n'),
 	}).then(() => {
 		fetchInstance(true);
 	});

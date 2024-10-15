@@ -32,9 +32,9 @@
 
 <script lang="ts" setup>
 import { onMounted, ref, computed } from 'vue';
+import { host } from '@@/js/config.js';
 import FormSection from '@/components/form/section.vue';
 import { i18n } from '@/i18n.js';
-import { host } from '@@/js/config.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import { instance } from '@/instance.js';
 import { userPage } from '@/filters/user.js';
@@ -81,12 +81,12 @@ definePageMetadata({
 	display: flex;
 	align-items: center;
 	padding: 12px;
-	background: var(--buttonBg);
+	background: var(--MI_THEME-buttonBg);
 	border-radius: 6px;
 
 	&:hover {
 		text-decoration: none;
-		background: var(--buttonHoverBg);
+		background: var(--MI_THEME-buttonHoverBg);
 	}
 }
 
