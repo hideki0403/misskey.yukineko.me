@@ -170,7 +170,7 @@ async function setOverrideAddress() {
 	text-align: center;
 	border-radius: 10px;
 	overflow: clip;
-	background-color: var(--panel);
+	background-color: var(--MI_THEME-panel);
 	background-size: cover;
 	background-position: center center;
 }
@@ -206,14 +206,14 @@ async function setOverrideAddress() {
 		flex-shrink: 0;
 		display: flex;
 		position: sticky;
-		top: calc(var(--stickyTop, 0px) + 8px);
+		top: calc(var(--MI-stickyTop, 0px) + 8px);
 		counter-increment: item;
 		content: counter(item);
 		width: 32px;
 		height: 32px;
 		line-height: 32px;
-		background-color: var(--accentedBg);
-		color: var(--accent);
+		background-color: var(--MI_THEME-accentedBg);
+		color: var(--MI_THEME-accent);
 		font-size: 13px;
 		font-weight: bold;
 		align-items: center;

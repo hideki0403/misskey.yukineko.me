@@ -52,6 +52,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkSwitch v-model="enableCondensedLine">
 						<template #label>Enable condensed line</template>
 					</MkSwitch>
+					<MkSwitch v-model="skipNoteRender">
+						<template #label>Enable note render skipping</template>
+					</MkSwitch>
 				</div>
 			</MkFolder>
 
@@ -113,6 +116,7 @@ const $i = signinRequired();
 
 const reportError = computed(defaultStore.makeGetterSetter('optoutStatistics'));
 const enableCondensedLine = computed(defaultStore.makeGetterSetter('enableCondensedLine'));
+const skipNoteRender = computed(defaultStore.makeGetterSetter('skipNoteRender'));
 const devMode = computed(defaultStore.makeGetterSetter('devMode'));
 const defaultWithReplies = computed(defaultStore.makeGetterSetter('defaultWithReplies'));
 const showConnectionStatus = computed(defaultStore.makeGetterSetter('showConnectionStatus'));
@@ -122,6 +126,10 @@ const overrideAddress = ref(miLocalStorage.getItem('overrideAddress') ?? '');
 watch(overrideAddress, async () => {
 	miLocalStorage.setItem('overrideAddress', overrideAddress.value);
 	cacheClear();
+});
+
+watch(skipNoteRender, async () => {
+	await reloadAsk({ reason: i18n.ts.reloadToApplySetting, unison: true });
 });
 
 async function deleteAccount() {

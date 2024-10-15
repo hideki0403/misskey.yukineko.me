@@ -23,10 +23,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
+import { version } from '@@/js/config.js';
 import * as os from '@/os.js';
 import MkButton from '@/components/MkButton.vue';
 import MkSparkle from '@/components/MkSparkle.vue';
-import { version } from '@@/js/config.js';
 import { i18n } from '@/i18n.js';
 
 const emit = defineEmits<{
@@ -45,24 +45,28 @@ function close() {
 function whatIsNew() {
 	emit('closed');
 	window.open(`https://misskey-hub.net/docs/releases/#_${version.split('-')[0].replace(/\./g, '-')}`, '_blank');
-};
+}
+
+;
 
 function whatIsNewKakurega() {
 	emit('closed');
 	window.open('https://github.com/hideki0403/misskey.yukineko.me/blob/master-kakurega/CHANGELOG_KAKUREGA.md', '_blank');
-};
+}
+
+;
 </script>
 
 <style lang="scss" module>
 .root {
 	position: fixed;
 	z-index: v-bind(zIndex);
-	bottom: var(--margin);
+	bottom: var(--MI-margin);
 	left: 0;
 	right: 0;
 	margin: auto;
 	box-sizing: border-box;
-	width: calc(100% - (var(--margin) * 2));
+	width: calc(100% - (var(--MI-margin) * 2));
 	max-width: 500px;
 	display: flex;
 }

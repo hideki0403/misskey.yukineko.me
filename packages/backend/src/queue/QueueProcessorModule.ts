@@ -6,6 +6,7 @@
 import { Module } from '@nestjs/common';
 import { CoreModule } from '@/core/CoreModule.js';
 import { GlobalModule } from '@/GlobalModule.js';
+import { CheckModeratorsActivityProcessorService } from '@/queue/processors/CheckModeratorsActivityProcessorService.js';
 import { QueueLoggerService } from './QueueLoggerService.js';
 import { QueueProcessorService } from './QueueProcessorService.js';
 import { DeliverProcessorService } from './processors/DeliverProcessorService.js';
@@ -53,7 +54,6 @@ import { IntegrationDaemonProcessorService } from './processors/IntegrationDaemo
 		TickChartsProcessorService,
 		ResyncChartsProcessorService,
 		CleanChartsProcessorService,
-		CheckExpiredMutingsProcessorService,
 		BakeBufferedReactionsProcessorService,
 		CleanProcessorService,
 		DeleteDriveFilesProcessorService,
@@ -84,6 +84,8 @@ import { IntegrationDaemonProcessorService } from './processors/IntegrationDaemo
 		InboxProcessorService,
 		AggregateRetentionProcessorService,
 		IntegrationDaemonProcessorService,
+		CheckExpiredMutingsProcessorService,
+		CheckModeratorsActivityProcessorService,
 		QueueProcessorService,
 	],
 	exports: [
