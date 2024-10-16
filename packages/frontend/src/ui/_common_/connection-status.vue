@@ -60,8 +60,8 @@ onUnmounted(() => {
 	display: flex;
 	gap: 4px;
 	z-index: v-bind(zIndex);
-	bottom: calc(var(--MI_THEME-minBottomSpacing) + var(--margin));
-	right: var(--margin);
+	bottom: calc(var(--MI-minBottomSpacing) + var(--MI-margin));
+	right: var(--MI-margin);
 	margin: 0;
 	padding: 6px 8px;
 	border-radius: 8px;
