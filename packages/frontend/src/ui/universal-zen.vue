@@ -5,24 +5,21 @@
 	<MkStickyContainer ref="contents" :class="$style.contents" style="container-type: inline-size;" @contextmenu.stop="onContextmenu">
 		<template #header>
 			<div>
-				<XAnnouncements v-if="$i" :class="$style.announcements"/>
+				<XAnnouncements v-if="$i"/>
 				<XStatusBars :class="$style.statusbars"/>
 				<MkPageHeader v-if="isRoot" :actions="headerActions"/>
 			</div>
 		</template>
 		<MkSpacer v-if="isRoot" :contentMax="800">
 			<MkPostForm :class="$style.postForm" class="post-form _panel" fixed style="margin-bottom: var(--margin);"/>
-			<XWidgets v-if="showWidgets"/>
+			<XWidgets v-if="showWidgets" :class="$style.widgets"/>
 		</MkSpacer>
 		<RouterView v-else/>
 		<div :class="$style.spacer"></div>
 	</MkStickyContainer>
 
 	<div v-if="isMobile" ref="navFooter" :class="$style.nav">
-		<button :class="$style.navButton" class="_button" @click="drawerMenuShowing = true">
-			<i :class="$style.navButtonIcon" class="ti ti-menu-2"></i>
-			<span v-if="menuIndicated" :class="$style.navButtonIndicator"><i class="_indicatorCircle"></i></span>
-		</button>
+		<button :class="$style.navButton" class="_button" @click="drawerMenuShowing = true"><i :class="$style.navButtonIcon" class="ti ti-menu-2"></i><span v-if="menuIndicated" :class="$style.navButtonIndicator" class="_blink"><i class="_indicatorCircle"></i></span></button>
 		<button :class="$style.navButton" class="_button" @click="isRoot ? top() : mainRouter.push('/')"><i :class="$style.navButtonIcon" class="ti ti-home"></i></button>
 		<button :class="$style.postButton" class="_button" @click="os.post()"><i :class="$style.navButtonIcon" class="ti ti-pencil"></i></button>
 	</div>
@@ -33,7 +30,13 @@
 		:enterFromClass="defaultStore.state.animation ? $style.transition_menuDrawerBg_enterFrom : ''"
 		:leaveToClass="defaultStore.state.animation ? $style.transition_menuDrawerBg_leaveTo : ''"
 	>
-		<div v-if="drawerMenuShowing" :class="$style.menuDrawerBg" class="_modalBg" @click="drawerMenuShowing = false" @touchstart.passive="drawerMenuShowing = false"></div>
+		<div
+			v-if="drawerMenuShowing"
+			:class="$style.menuDrawerBg"
+			class="_modalBg"
+			@click="drawerMenuShowing = false"
+			@touchstart.passive="drawerMenuShowing = false"
+		></div>
 	</Transition>
 
 	<Transition
@@ -52,9 +55,10 @@
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, provide, onMounted, computed, ref, ComputedRef, watch, shallowRef, Ref } from 'vue';
+import { defineAsyncComponent, provide, onMounted, computed, ref, watch, shallowRef, Ref } from 'vue';
 import { instanceName } from '@@/js/config.js';
 import { CURRENT_STICKY_BOTTOM } from '@@/js/const.js';
+import { isLink } from '@@/js/is-link.js';
 import XCommon from './_common_/common.vue';
 import type MkStickyContainer from '@/components/global/MkStickyContainer.vue';
 import XDrawerMenu from '@/ui/_common_/navbar-for-mobile.vue';
@@ -64,11 +68,11 @@ import { defaultStore } from '@/store.js';
 import { navbarItemDef } from '@/navbar.js';
 import { i18n } from '@/i18n.js';
 import { $i } from '@/account.js';
-import { mainRouter } from '@/router/main.js';
 import { PageMetadata, provideMetadataReceiver, provideReactiveMetadata } from '@/scripts/page-metadata.js';
 import { deviceKind } from '@/scripts/device-kind.js';
 import { miLocalStorage } from '@/local-storage.js';
 import { useScrollPositionManager } from '@/nirax.js';
+import { mainRouter } from '@/router/main.js';
 import { zenStore } from '@/ui/universal-zen/zen-store.js';
 
 const XWidgets = defineAsyncComponent(() => import('./universal.widgets.vue'));
@@ -76,7 +80,7 @@ const XSidebar = defineAsyncComponent(() => import('@/ui/_common_/navbar.vue'));
 const XStatusBars = defineAsyncComponent(() => import('@/ui/_common_/statusbars.vue'));
 const XAnnouncements = defineAsyncComponent(() => import('@/ui/_common_/announcements.vue'));
 
-const isRoot = ref(mainRouter.currentRoute.value.name === 'index');
+const isRoot = computed(() => mainRouter.currentRoute.value.name === 'index');
 
 const DESKTOP_THRESHOLD = 1100;
 const MOBILE_THRESHOLD = 500;
@@ -115,7 +119,6 @@ provide('router', mainRouter);
 provideMetadataReceiver((metadataGetter) => {
 	const info = metadataGetter();
 	pageMetadata.value = info;
-
 	if (pageMetadata.value) {
 		if (isRoot.value && pageMetadata.value.title === instanceName) {
 			document.title = pageMetadata.value.title;
@@ -173,12 +176,6 @@ onMounted(() => {
 });
 
 const onContextmenu = (ev) => {
-	const isLink = (el: HTMLElement) => {
-		if (el.tagName === 'A') return true;
-		if (el.parentElement) {
-			return isLink(el.parentElement);
-		}
-	};
 	if (isLink(ev.target)) return;
 	if (['INPUT', 'TEXTAREA', 'IMG', 'VIDEO', 'CANVAS'].includes(ev.target.tagName) || ev.target.attributes['contenteditable']) return;
 	if (window.getSelection()?.toString() !== '') return;
@@ -196,7 +193,7 @@ const onContextmenu = (ev) => {
 };
 
 function top() {
-	contents.value?.rootEl?.scrollTo({
+	contents.value.rootEl.scrollTo({
 		top: 0,
 		behavior: 'smooth',
 	});
@@ -208,18 +205,18 @@ provide<Ref<number>>(CURRENT_STICKY_BOTTOM, navFooterHeight);
 watch(navFooter, () => {
 	if (navFooter.value) {
 		navFooterHeight.value = navFooter.value.offsetHeight;
-		document.body.style.setProperty('--stickyBottom', `${navFooterHeight.value}px`);
-		document.body.style.setProperty('--minBottomSpacing', 'var(--MI_THEME-minBottomSpacingMobile)');
+		document.body.style.setProperty('--MI-stickyBottom', `${navFooterHeight.value}px`);
+		document.body.style.setProperty('--MI-minBottomSpacing', 'var(--MI-minBottomSpacingMobile)');
 	} else {
 		navFooterHeight.value = 0;
-		document.body.style.setProperty('--stickyBottom', '0px');
-		document.body.style.setProperty('--minBottomSpacing', '0px');
+		document.body.style.setProperty('--MI-stickyBottom', '0px');
+		document.body.style.setProperty('--MI-minBottomSpacing', '0px');
 	}
 }, {
 	immediate: true,
 });
 
-useScrollPositionManager(() => contents.value?.rootEl ?? null, mainRouter);
+useScrollPositionManager(() => contents.value.rootEl, mainRouter);
 
 const headerActions = computed(() => [{
 	icon: 'ti ti-settings',
@@ -261,7 +258,6 @@ $widgets-hide-threshold: 1090px;
 	opacity: 1;
 	transition: opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
 }
-
 .transition_menuDrawerBg_enterFrom,
 .transition_menuDrawerBg_leaveTo {
 	opacity: 0;
@@ -273,35 +269,10 @@ $widgets-hide-threshold: 1090px;
 	transform: translateX(0);
 	transition: transform 300ms cubic-bezier(0.23, 1, 0.32, 1), opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
 }
-
 .transition_menuDrawer_enterFrom,
 .transition_menuDrawer_leaveTo {
 	opacity: 0;
 	transform: translateX(-240px);
-}
-
-.transition_widgetsDrawerBg_enterActive,
-.transition_widgetsDrawerBg_leaveActive {
-	opacity: 1;
-	transition: opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.transition_widgetsDrawerBg_enterFrom,
-.transition_widgetsDrawerBg_leaveTo {
-	opacity: 0;
-}
-
-.transition_widgetsDrawer_enterActive,
-.transition_widgetsDrawer_leaveActive {
-	opacity: 1;
-	transform: translateX(0);
-	transition: transform 300ms cubic-bezier(0.23, 1, 0.32, 1), opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.transition_widgetsDrawer_enterFrom,
-.transition_widgetsDrawer_leaveTo {
-	opacity: 0;
-	transform: translateX(240px);
 }
 
 .root {
@@ -326,64 +297,6 @@ $widgets-hide-threshold: 1090px;
 	background: var(--MI_THEME-bg);
 }
 
-.widgets {
-	width: 350px;
-	height: 100%;
-	box-sizing: border-box;
-	overflow: auto;
-	padding: var(--margin) var(--margin) calc(var(--margin) + env(safe-area-inset-bottom, 0px));
-	border-left: solid 0.5px var(--MI_THEME-divider);
-	background: var(--MI_THEME-bg);
-
-	@media (max-width: $widgets-hide-threshold) {
-		display: none;
-	}
-}
-
-.widgetButton {
-	display: block;
-	position: fixed;
-	z-index: 1000;
-	bottom: 32px;
-	right: 32px;
-	width: 64px;
-	height: 64px;
-	border-radius: 100%;
-	box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
-	font-size: 22px;
-	background: var(--MI_THEME-panel);
-}
-
-.widgetsDrawerBg {
-	z-index: 1001;
-}
-
-.widgetsDrawer {
-	position: fixed;
-	top: 0;
-	right: 0;
-	z-index: 1001;
-	width: 310px;
-	height: 100dvh;
-	padding: var(--margin) var(--margin) calc(var(--margin) + env(safe-area-inset-bottom, 0px)) !important;
-	box-sizing: border-box;
-	overflow: auto;
-	overscroll-behavior: contain;
-	background: var(--MI_THEME-bg);
-}
-
-.widgetsCloseButton {
-	padding: 8px;
-	display: block;
-	margin: 0 auto;
-}
-
-@media (min-width: 370px) {
-	.widgetsCloseButton {
-		display: none;
-	}
-}
-
 .nav {
 	position: fixed;
 	z-index: 1000;
@@ -394,8 +307,8 @@ $widgets-hide-threshold: 1090px;
 	justify-content: space-between;
 	width: 100%;
 	box-sizing: border-box;
-	-webkit-backdrop-filter: var(--MI_THEME-blur, blur(24px));
-	backdrop-filter: var(--MI_THEME-blur, blur(24px));
+	-webkit-backdrop-filter: var(--MI-blur, blur(24px));
+		backdrop-filter: var(--MI-blur, blur(24px));
 	background-color: var(--MI_THEME-header);
 	border-top: solid 0.5px var(--MI_THEME-divider);
 }
@@ -416,7 +329,7 @@ $widgets-hide-threshold: 1090px;
 	}
 
 	&:active {
-		background: var(--MI_THEME-X2);
+		background: hsl(from var(--MI_THEME-panel) h s calc(l - 2));
 	}
 }
 
@@ -426,11 +339,11 @@ $widgets-hide-threshold: 1090px;
 	color: var(--MI_THEME-fgOnAccent);
 
 	&:hover {
-		background: linear-gradient(90deg, var(--MI_THEME-X8), var(--MI_THEME-X8));
+		background: linear-gradient(90deg, hsl(from var(--MI_THEME-accent) h s calc(l + 5)), hsl(from var(--MI_THEME-accent) h s calc(l + 5)));
 	}
 
 	&:active {
-		background: linear-gradient(90deg, var(--MI_THEME-X8), var(--MI_THEME-X8));
+		background: linear-gradient(90deg, hsl(from var(--MI_THEME-accent) h s calc(l + 5)), hsl(from var(--MI_THEME-accent) h s calc(l + 5)));
 	}
 }
 
@@ -445,7 +358,6 @@ $widgets-hide-threshold: 1090px;
 	left: 0;
 	color: var(--MI_THEME-indicator);
 	font-size: 16px;
-	animation: blink 1s infinite;
 
 	&:has(.itemIndicateValueIcon) {
 		animation: none;
@@ -478,10 +390,14 @@ $widgets-hide-threshold: 1090px;
 }
 
 .spacer {
-	height: calc(var(--MI_THEME-minBottomSpacing));
+	height: calc(var(--MI-minBottomSpacing));
 }
 
 .postForm {
-	border-radius: var(--MI_THEME-radius);
+	border-radius: var(--MI-radius);
+}
+
+.widgets {
+	margin-top: var(--MI-margin);
 }
 </style>
