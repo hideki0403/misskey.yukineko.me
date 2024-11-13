@@ -252,7 +252,7 @@ const maxTextLength = computed((): number => {
 
 const canPost = computed((): boolean => {
 	return !props.mock && !posting.value && !posted.value &&
-		(scheduledNoteDelete.value ? scheduledNoteDelete.value.isValid : true) &&
+		(scheduledNoteDelete.value == null || scheduledNoteDelete.value.isValid) &&
 		(
 			1 <= textLength.value ||
 			1 <= files.value.length ||
@@ -476,7 +476,7 @@ function toggleScheduledNoteDelete() {
 	} else {
 		scheduledNoteDelete.value = {
 			deleteAt: null,
-			deleteAfter: null,
+			deleteAfter: defaultStore.state.defaultScheduledNoteDeleteTime,
 			isValid: true,
 		};
 	}
