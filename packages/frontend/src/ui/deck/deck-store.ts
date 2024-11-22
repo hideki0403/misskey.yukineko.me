@@ -51,6 +51,7 @@ export type Column = {
 	tl?: BasicTimelineType;
 	withRenotes?: boolean;
 	withReplies?: boolean;
+	withSensitive?: boolean;
 	onlyFiles?: boolean;
 	soundSetting: SoundStore;
 };
