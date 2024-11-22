@@ -372,7 +372,7 @@ async function onSubmit(): Promise<void> {
 		return null;
 	});
 
-	if (res) {
+	if (res && res.ok) {
 		if (res.status === 204 || instance.emailRequiredForSignup) {
 			os.alert({
 				type: 'success',
@@ -390,6 +390,8 @@ async function onSubmit(): Promise<void> {
 				await login(resJson.token);
 			}
 		}
+	} else {
+		onSignupApiError();
 	}
 
 	submitting.value = false;
