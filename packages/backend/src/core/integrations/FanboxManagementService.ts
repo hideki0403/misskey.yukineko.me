@@ -172,6 +172,7 @@ export class FanboxManagementService implements OnApplicationShutdown {
 			},
 			timeout: 30000,
 			size: 1024 * 256,
+			isLocalAddressAllowed: true,
 		}).then(res => res.json()).catch(async err => {
 			if (!(err instanceof StatusError)) {
 				this.logger.error(err);
