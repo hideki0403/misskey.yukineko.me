@@ -26,7 +26,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<MkAvatar style="width: 60px; height: 60px;" :user="$i" :decorations="url != '' ? [{ url }] : []" forceShowDecoration/>
 					</div>
 				</div>
-				<MkButton rounded style="margin: 0 auto;" @click="selectImage(avatarDecoration, $event)">{{ i18n.ts.selectFile }}</MkButton>
+				<MkButton rounded style="margin: 0 auto;" @click="selectImage($event)">{{ i18n.ts.selectFile }}</MkButton>
 				<MkInput v-model="name">
 					<template #label>{{ i18n.ts.name }}</template>
 				</MkInput>
@@ -99,10 +99,10 @@ watch(roleIdsThatCanBeUsedThisDecoration, async () => {
 	rolesThatCanBeUsedThisDecoration.value = (await Promise.all(roleIdsThatCanBeUsedThisDecoration.value.map((id) => misskeyApi('admin/roles/show', { roleId: id }).catch(() => null)))).filter(x => x != null);
 }, { immediate: true });
 
-async function selectImage(decoration, ev) {
+async function selectImage(ev) {
 	const file = await selectFile(ev.currentTarget ?? ev.target, null);
-	decoration.name = file.name.replace(/\.(.+)$/, '');
-	decoration.url = file.url;
+	name.value = file.name.replace(/\.(.+)$/, '');
+	url.value = file.url;
 }
 
 async function addRole() {
