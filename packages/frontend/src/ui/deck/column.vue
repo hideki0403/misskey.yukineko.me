@@ -126,10 +126,6 @@ function getMenu() {
 		});
 	}
 
-	if (props.enableFilter || props.menu) {
-		menuItems.push({ type: 'divider' });
-	}
-
 	if (props.enableFilter) {
 		menuItems.push({
 			icon: 'ti ti-filter',
