@@ -588,7 +588,7 @@ export class ClientServerService {
 					reply.header('X-Robots-Tag', 'noai');
 				}
 
-				const _user = await this.userEntityService.pack(user);
+				const _user = await this.userEntityService.pack(user, null, { schema: 'UserDetailedNotMe' });
 
 				return await reply.view('user', {
 					user, profile, me,
