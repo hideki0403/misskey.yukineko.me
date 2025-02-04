@@ -36,7 +36,6 @@ export class MiUserProfile {
 	})
 	public birthday: string | null;
 
-	@Index() // USING pgroonga pgroonga_varchar_full_text_search_ops_v2
 	@Column('varchar', {
 		length: 2048, nullable: true,
 		comment: 'The description (bio) of the User.',
