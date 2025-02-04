@@ -208,8 +208,9 @@ fulltextSearch:
   # - sqlPgroonga
   #   Use pgroonga.
   #   You need to install pgroonga and configure it as a PostgreSQL extension.
-  #   In addition to the above, you need to create a pgroonga index on the text column of the note table.
-  #   see: https://pgroonga.github.io/tutorial/
+  #   In addition to the above, you need to create a pgroonga index.
+  #   see: https://github.com/hideki0403/kakurega.app/blob/dev-kakurega/docs/setup/manual.md
+  #   pgroonga tutorial: https://pgroonga.github.io/tutorial/
   # - meilisearch
   #   Use Meilisearch.
   #   You need to install Meilisearch and configure.
