@@ -1,3 +1,15 @@
+## 1.40.0
+Release: 2025/02/05  
+Base: 2025.1.0  
+
+### 変更
+Misskey 2025.1.0をマージしました。
+
+> [!IMPORTANT] 重要な変更点 (サーバー管理者向け)
+> Misskey 2025.1.0で検索プロバイダを変更できる機能が追加されました。  
+> デフォルトの設定ではpostgres標準の検索(LIKE)になっているため、引き続きpgroongaを使用する場合は `.config/default.yml` 内の `fulltextSearch.provider` を `pgroonga` に設定する必要があります。  
+> 詳しくは `.config/example.yml` を参照してください。
+
 ## 1.39.6
 Release: 2024/11/27  
 Base: 2024.11.0  

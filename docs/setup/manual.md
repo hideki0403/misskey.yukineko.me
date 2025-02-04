@@ -9,21 +9,6 @@
 - [前提ソフトウェア](https://misskey-hub.net/ja/docs/for-admin/install/guides/manual/#%E4%BB%A5%E4%B8%8B%E3%81%AE%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E3%81%8C%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB%E8%A8%AD%E5%AE%9A%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%82%8B%E3%81%93%E3%81%A8)
 - [ユーザーの作成](https://misskey-hub.net/ja/docs/for-admin/install/guides/manual/#%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%81%AE%E4%BD%9C%E6%88%90)
 
-> [!IMPORTANT]
-> ドキュメントに記載されている前提ソフトウェアに加え、**pgroongaのインストールが必須になります**  
-> インストール方法は[こちら](https://pgroonga.github.io/ja/install/)を参照してください。
->
-> #### マイグレーション時の注意点
-> マイグレーションを行うユーザー (.config/default.yml のdbに記載されているユーザー) がスーパーユーザー権限を持っていないとコケる可能性があります。  
-> マイグレーション時に `QueryFailedError: permission denied to create extension "pgroonga"` が表示された場合は、一時的にスーパーユーザー権限を付与してマイグレーションを行ってください。
->
-> #### pgroongaを使用しない場合
-> 手順「2. リポジトリのクローンとインストール」の後に以下のコマンドを実行し、関連するコミットおよびコードを取り除いてください
-> ```bash
-> git revert 923c9de5c5cb1ba2e3e9c924f5227aaa61bd7f00
-> git revert 4b63224f3a53a5e38f9a901e40c7a4fadbbd42a8
-> ```
-
 ### 2. リポジトリのクローンとインストール
 以下のコマンドでリポジトリをクローンし、依存関係のインストールを行います。
 
@@ -63,3 +48,19 @@ NODE_ENV=production pnpm run start
  TimeoutSec=60
  StandardOutput=journal
  ```
+
+### 6. 検索プロバイダの設定 (任意)
+Misskey 2025.1.0からは検索プロバイダとしてpgroongaを使用することが出来るようになっており、隠れ家フォークではノート検索に加えてユーザー検索でもpgroongaを使用するように改変されています。  
+検索プロバイダにpgroongaを指定する場合は、**pgroongaを導入した後に**以下のようにインデックスを作成してください。
+
+> [!TIP]
+> pgroongaのインストール方法は[こちら](https://pgroonga.github.io/ja/install/)を参照してください。
+
+> [!IMPORTANT] 
+> バージョン `2024.11.0-kakurega.1.39.6` 以前から使用している場合はインデックスを作成する必要はありません。
+
+```sql
+CREATE INDEX "IDX_PGROONGA_NOTE_TEXT" ON "note" USING "pgroonga" ("text");
+CREATE INDEX "IDX_PGROONGA_USER_NAME" ON "user" USING "pgroonga" ("name" pgroonga_varchar_full_text_search_ops_v2);
+CREATE INDEX "IDX_PGROONGA_USER_PROFILE_DESCRIPTION" ON "user_profile" USING "pgroonga" ("description" pgroonga_varchar_full_text_search_ops_v2);
+```

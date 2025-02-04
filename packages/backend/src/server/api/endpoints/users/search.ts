@@ -11,6 +11,7 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { DI } from '@/di-symbols.js';
 import { sqlLikeEscape } from '@/misc/sql-like-escape.js';
+import { type Config } from '@/config.js';
 
 export const meta = {
 	tags: ['users'],
@@ -45,6 +46,9 @@ export const paramDef = {
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
 		@Inject(DI.usersRepository)
 		private usersRepository: UsersRepository,
 
@@ -63,7 +67,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			const nameQuery = this.usersRepository.createQueryBuilder('user')
 				.where(new Brackets(qb => {
-					qb.where('user.name &@~ :query', { query: ps.query });
+					if (this.config.fulltextSearch?.provider === 'sqlPgroonga') {
+						qb.where('user.name &@~ :query', { query: ps.query });
+					} else {
+						qb.where('user.name ILIKE :query', { query: '%' + sqlLikeEscape(ps.query) + '%' });
+					}
 
 					if (isUsername) {
 						qb.orWhere('user.usernameLower LIKE :username', { username: sqlLikeEscape(ps.query.replace('@', '').toLowerCase()) + '%' });
@@ -92,8 +100,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (users.length < ps.limit) {
 				const profQuery = this.userProfilesRepository.createQueryBuilder('prof')
-					.select('prof.userId')
-					.where('prof.description &@~ :query', { query: ps.query });
+					.select('prof.userId');
+
+				if (this.config.fulltextSearch?.provider === 'sqlPgroonga') {
+					profQuery.where('prof.description &@~ :query', { query: ps.query });
+				} else {
+					profQuery.where('prof.description ILIKE :query', { query: '%' + sqlLikeEscape(ps.query) + '%' });
+				}
 
 				if (ps.origin === 'local') {
 					profQuery.andWhere('prof.userHost IS NULL');
@@ -102,7 +115,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				}
 
 				const query = this.usersRepository.createQueryBuilder('user')
-					.where(`user.id IN (${ profQuery.getQuery() })`)
+					.where(`user.id IN (${profQuery.getQuery()})`)
 					.andWhere(new Brackets(qb => {
 						qb
 							.where('user.updatedAt IS NULL')

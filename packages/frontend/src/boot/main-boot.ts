@@ -7,6 +7,7 @@ import { createApp, defineAsyncComponent, markRaw } from 'vue';
 import { ui } from '@@/js/config.js';
 import { common } from './common.js';
 import type * as Misskey from 'misskey-js';
+import type { Component } from 'vue';
 import { i18n } from '@/i18n.js';
 import { alert, confirm, popup, post, toast } from '@/os.js';
 import { useStream } from '@/stream.js';
@@ -25,14 +26,42 @@ import { type Keymap, makeHotkey } from '@/scripts/hotkey.js';
 import { addCustomEmoji, removeCustomEmojis, updateCustomEmojis } from '@/custom-emojis.js';
 
 export async function mainBoot() {
-	const { isClientUpdated } = await common(() => createApp(
-		new URLSearchParams(window.location.search).has('zen') || (ui === 'deck' && deckStore.state.useSimpleUiForNonRootPages && location.pathname !== '/') ? defineAsyncComponent(() => import('@/ui/zen.vue')) :
-		!$i ? defineAsyncComponent(() => import('@/ui/visitor.vue')) :
-		ui === 'deck' ? defineAsyncComponent(() => import('@/ui/deck.vue')) :
-		ui === 'classic' ? defineAsyncComponent(() => import('@/ui/classic.vue')) :
-		ui === 'zen' ? defineAsyncComponent(() => import('@/ui/universal-zen.vue')) :
-		defineAsyncComponent(() => import('@/ui/universal.vue')),
-	));
+	const { isClientUpdated } = await common(() => {
+		let uiStyle = ui;
+		const searchParams = new URLSearchParams(window.location.search);
+
+		if (!$i) uiStyle = 'visitor';
+
+		if (uiStyle === 'zen') uiStyle = 'universal-zen';
+		if (searchParams.has('zen')) uiStyle = 'zen';
+		if (uiStyle === 'deck' && deckStore.state.useSimpleUiForNonRootPages && location.pathname !== '/') uiStyle = 'zen';
+
+		if (searchParams.has('ui')) uiStyle = searchParams.get('ui');
+
+		let rootComponent: Component;
+		switch (uiStyle) {
+			case 'zen':
+				rootComponent = defineAsyncComponent(() => import('@/ui/zen.vue'));
+				break;
+			case 'deck':
+				rootComponent = defineAsyncComponent(() => import('@/ui/deck.vue'));
+				break;
+			case 'visitor':
+				rootComponent = defineAsyncComponent(() => import('@/ui/visitor.vue'));
+				break;
+			case 'classic':
+				rootComponent = defineAsyncComponent(() => import('@/ui/classic.vue'));
+				break;
+			case 'universal-zen':
+				rootComponent = defineAsyncComponent(() => import('@/ui/universal-zen.vue'));
+				break;
+			default:
+				rootComponent = defineAsyncComponent(() => import('@/ui/universal.vue'));
+				break;
+		}
+
+		return createApp(rootComponent);
+	});
 
 	reactionPicker.init();
 	emojiPicker.init();
