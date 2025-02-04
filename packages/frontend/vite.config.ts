@@ -4,6 +4,8 @@ import pluginVue from '@vitejs/plugin-vue';
 import { type UserConfig, defineConfig } from 'vite';
 import viteSentry from 'vite-plugin-sentry';
 import dotenv from 'dotenv';
+import * as yaml from 'js-yaml';
+import { promises as fsp } from 'fs';
 
 import locales from '../../locales/index.js';
 import meta from '../../package.json';
@@ -12,6 +14,8 @@ import pluginUnwindCssModuleClassName from './lib/rollup-plugin-unwind-css-modul
 import pluginJson5 from './vite.json5.js';
 
 dotenv.config();
+const url = process.env.NODE_ENV === 'development' ? yaml.load(await fsp.readFile('../../.config/default.yml', 'utf-8')).url : null;
+const host = url ? (new URL(url)).hostname : undefined;
 
 const extensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.json', '.json5', '.svg', '.sass', '.scss', '.css', '.vue'];
 
@@ -68,7 +72,14 @@ export function getConfig(): UserConfig {
 		base: '/vite/',
 
 		server: {
+			host,
 			port: 5173,
+			hmr: {
+				// バックエンド経由での起動時、Viteは5173経由でアセットを参照していると思い込んでいるが実際は3000から配信される
+				// そのため、バックエンドのWSサーバーにHMRのWSリクエストが吸収されてしまい、正しくHMRが機能しない
+				// クライアント側のWSポートをViteサーバーのポートに強制させることで、正しくHMRが機能するようになる
+				clientPort: 5173,
+			},
 			headers: { // なんか効かない
 				'X-Frame-Options': 'DENY',
 			},
